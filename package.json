@@ -43,6 +43,7 @@
     "html-webpack-include-assets-plugin": "0.0.5",
     "html-webpack-plugin": "2.28.0",
     "json-loader": "0.5.4",
+    "jwt-decode": "^2.2.0",
     "less": "2.7.1",
     "less-loader": "2.2.3",
     "lodash": "3.10.1",
@@ -70,7 +71,7 @@
     "style-loader": "0.13.1",
     "sundial": "1.5.1",
     "tideline": "0.5.33",
-    "tidepool-platform-client": "0.31.1",
+    "tidepool-platform-client": "0.4.0-alpha.5",
     "uglify-es": "3.0.13",
     "url-loader": "0.5.7",
     "webpack": "1.13.2"

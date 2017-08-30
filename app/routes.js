@@ -7,7 +7,8 @@ import BrowserWarning from './pages/browserwarning';
 import ClinicianDetails from './pages/cliniciandetails';
 import ConfirmPasswordReset from './pages/passwordreset/confirm';
 import EmailVerification from './pages/emailverification';
-import Login from './pages/login';
+import Auth from './components/auth';
+import HostedLogin from './pages/hostedlogin';
 import PatientData from './pages/patientdata';
 import PatientNew from './pages/patientnew';
 import PatientProfile from './pages/patientprofile/patientprofile';
@@ -274,11 +275,11 @@ export const onOtherRouteEnter = (api) => (nextState, replace) => {
 export const getRoutes = (appContext, store) => {
   let props = appContext.props;
   let api = props.api;
-
-  return (
+ return (
     <Route path='/' component={AppComponent} {...props}>
-      <IndexRoute component={Login} onEnter={onIndexRouteEnter(api, store)} />
-      <Route path='login' component={Login} onEnter={requireNoAuth(api)} />
+      <IndexRoute component={HostedLogin} />
+      <Route path='login' component={HostedLogin} />
+      <Route path='logged-in' component={Auth} {...props}/>
       <Route path='terms' components={Terms} />
       <Route path='signup' component={Signup} onEnter={requireNoAuth(api)} />
       <Route path='signup/personal' component={Signup} onEnter={requireNoAuth(api)} />
