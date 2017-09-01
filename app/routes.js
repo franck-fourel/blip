@@ -9,13 +9,13 @@ import ConfirmPasswordReset from './pages/passwordreset/confirm';
 import EmailVerification from './pages/emailverification';
 import Auth from './components/auth';
 import HostedLogin from './pages/hostedlogin';
+import HostedSignup from './pages/hostedsignup';
 import PatientData from './pages/patientdata';
 import PatientNew from './pages/patientnew';
 import PatientProfile from './pages/patientprofile/patientprofile';
 import Patients from './pages/patients';
 import RequestPasswordReset from './pages/passwordreset/request';
 import Share from './pages/share/share';
-import Signup from './pages/signup';
 import Terms from './pages/terms';
 import UserProfile from './pages/userprofile';
 import VerificationWithPassword from './pages/verificationwithpassword';
@@ -281,9 +281,9 @@ export const getRoutes = (appContext, store) => {
       <Route path='login' component={HostedLogin} />
       <Route path='logged-in' component={Auth} {...props}/>
       <Route path='terms' components={Terms} />
-      <Route path='signup' component={Signup} onEnter={requireNoAuth(api)} />
-      <Route path='signup/personal' component={Signup} onEnter={requireNoAuth(api)} />
-      <Route path='signup/clinician' component={Signup} onEnter={requireNoAuth(api)} />
+      <Route path='signup' component={HostedSignup} onEnter={requireNoAuth(api)} />
+      <Route path='signup/personal' component={HostedSignup} onEnter={requireNoAuth(api)} />
+      <Route path='signup/clinician' component={HostedSignup} onEnter={requireNoAuth(api)} />
       <Route path='clinician-details' component={ClinicianDetails} onEnter={requireAuth(api, store)} />
       <Route path='email-verification' component={EmailVerification} onEnter={requireNotVerified(api, store)} />
       <Route path='profile' component={UserProfile} onEnter={requireAuth(api, store)} />

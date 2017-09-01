@@ -25,7 +25,7 @@ export let HostedLogin = React.createClass({
 
   render: function() {
     const nonce = Math.random().toString(36).substring(7);
-    const authURL = `https://${AUTH_CONFIG.domain}/authorize?scope=${AUTH_CONFIG.scope}&audience=${AUTH_CONFIG.audience}&response_type=${AUTH_CONFIG.responseType}&client_id=${AUTH_CONFIG.clientId}&redirect_uri=${AUTH_CONFIG.redirectUri}&nonce=${nonce}`; 
+    const authURL = `https://${AUTH_CONFIG.domain}/authorize?scope=${AUTH_CONFIG.scope}&audience=${AUTH_CONFIG.audience}&response_type=${AUTH_CONFIG.responseType}&client_id=${AUTH_CONFIG.clientId}&redirect_uri=${AUTH_CONFIG.redirectUri}&nonce=${nonce}&initialScreen=login`; 
    
     return (
       <div className="HostedLogin">
