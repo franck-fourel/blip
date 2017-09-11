@@ -120,17 +120,23 @@ api.user.signup = function(user, cb) {
     });
 
     // Then, add additional user info (full name, etc.) to profile
-    tidepool.addOrUpdateProfile(userId, newProfile, function(err, results) {
-      if (err) {
-        return cb(err);
-      }
+    if (newProfile) {
+      tidepool.addOrUpdateProfile(userId, newProfile, function(err, results) {
+        if (err) {
+          return cb(err);
+        }
 
-      api.log('added profile info to signup', results);
+        api.log('added profile info to signup', results);
+        cb(null, userFromAccountAndProfile({
+          account: account,
+          profile: results
+        }));
+      });
+    } else {
       cb(null, userFromAccountAndProfile({
         account: account,
-        profile: results
       }));
-    });
+    }
   });
 };
 
@@ -162,7 +168,9 @@ api.user.get = function(cb) {
   // ...and user profile information (full name, etc.)
   const getProfile = function(cb) {
     tidepool.findProfile(userId, function(err, profile) {
-      if (err) {
+      // We don't want to fire an error if the patient has no profile saved yet,
+      // so we check if the error status is not 404 first.
+      if (err && err.status !== 404) {
         return cb(err);
       }
 
@@ -232,8 +240,9 @@ function profileFromUser(user) {
 
 function userFromAccountAndProfile(results) {
   // sometimes `account` isn't in the results after e.g., password update
-  const account = results.account || {};
-  const profile = results.profile;
+  var account = results.account || {};
+  // sometimes `profile` isn't in the results after e.g., after account signup
+  var profile = results.profile || {};
 
   const user = account;
   user.profile = profile;
