@@ -277,7 +277,7 @@ export const getRoutes = (appContext, store) => {
  return (
     <Route path='/' component={AppComponent} {...props}>
       <IndexRoute component={HostedLogin} />
-      <Route path='login' component={HostedLogin} />
+      <Route path='login' component={HostedLogin} onEnter={requireNoAuth(api)} />
       <Route path='logged-in' component={Auth} {...props}/>
       <Route path='terms' components={Terms} />
       <Route path='signup' component={HostedSignup} onEnter={requireNoAuth(api)} />

@@ -4,5 +4,6 @@ export const AUTH_CONFIG = {
   responseType: 'id_token token',
   scope: 'openid profile read:device-data',
   audience: 'open-api',
-  redirectUri: 'http://localhost:3000/logged-in'
+  loginRedirectUri: 'http://localhost:3000/logged-in',
+  signupRedirectUri: 'http://localhost:3000/email-verification'
 }

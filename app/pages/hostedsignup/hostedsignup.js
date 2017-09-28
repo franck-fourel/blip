@@ -140,7 +140,7 @@ export let HostedSignup = React.createClass({
     function nonce() {
       return  Math.random().toString(36).substring(7);
     }
-    window.location = `https://${AUTH_CONFIG.domain}/authorize?scope=${AUTH_CONFIG.scope}&audience=${AUTH_CONFIG.audience}&response_type=${AUTH_CONFIG.responseType}&client_id=${AUTH_CONFIG.clientId}&redirect_uri=${AUTH_CONFIG.redirectUri}&nonce=${nonce()}&initialScreen=signUp&role=${this.state.selected}`;
+    window.location = `https://${AUTH_CONFIG.domain}/authorize?scope=${AUTH_CONFIG.scope}&audience=${AUTH_CONFIG.audience}&response_type=${AUTH_CONFIG.responseType}&client_id=${AUTH_CONFIG.clientId}&redirect_uri=${AUTH_CONFIG.signupRedirectUri}&nonce=${nonce()}&initialScreen=signUp&role=${this.state.selected}`;
   },
 });
 
