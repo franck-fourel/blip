@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import React from 'react';
-import { Route, IndexRoute } from 'react-router';
+import { RouteRoute, IndexRoute } from 'react-router';
 
 import AppComponent from './pages/app';
 import BrowserWarning from './pages/browserwarning';
@@ -166,9 +166,7 @@ export const requireNotVerified = (api, store) => (nextState, replace, cb) => {
           return cb();
         }
         throw new Error('Error getting user at /email-verification');
-        return cb();
       }
-
       checkIfVerified(user);
     });
   }

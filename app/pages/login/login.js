@@ -26,11 +26,9 @@ import _ from 'lodash';
 import config from '../../config';
 
 import utils from '../../core/utils';
-import { validateForm } from '../../core/validation';
 
 import LoginNav from '../../components/loginnav';
 import LoginLogo from '../../components/loginlogo';
-import SimpleForm from '../../components/simpleform';
 
 export let Login = React.createClass({
   propTypes: {
@@ -45,25 +43,9 @@ export let Login = React.createClass({
     working: React.PropTypes.bool.isRequired
   },
 
-  formInputs: function() {
-    return [
-      { name: 'username', placeholder: 'Email', type: 'email', disabled: !!this.props.seedEmail },
-      { name: 'password', placeholder: 'Password', type: 'password' },
-      { name: 'remember', label: 'Remember me', type: 'checkbox' }
-    ];
-  },
-
   getInitialState: function() {
-    var formValues = {};
-    var email = this.props.seedEmail;
-
-    if (email) {
-      formValues.username = email;
-    }
-
     return {
-      formValues: formValues,
-      validationErrors: {},
+      seedEmail: this.props.seedEmail,
       notification: null
     };
   },
@@ -79,6 +61,7 @@ export let Login = React.createClass({
           hideLinks={Boolean(this.props.seedEmail)}
           trackMetric={this.props.trackMetric} />
         <LoginLogo />
+
         {inviteIntro}
         <div className="container-small-outer login-form">
           <div className="container-small-inner login-form-box">
@@ -102,20 +85,18 @@ export let Login = React.createClass({
   },
 
   renderForm: function() {
-    var submitButtonText = this.props.working ? 'Logging in...' : 'Login';
     var forgotPassword = this.renderForgotPassword();
+    const loggedInRedirectUri = 'http://localhost:3000/logged-in';
+
+    const loginURL = `http://localhost:3007?email=${this.state.seedEmail}&redirect_uri=${loggedInRedirectUri}`
 
     return (
-      <SimpleForm
-        inputs={this.formInputs()}
-        formValues={this.state.formValues}
-        validationErrors={this.state.validationErrors}
-        submitButtonText={submitButtonText}
-        submitDisabled={this.props.working}
-        onSubmit={this.handleSubmit}
-        notification={this.state.notification || this.props.notification}>
+      <div>
         {<div className="login-forgotpassword">{forgotPassword}</div>}
-      </SimpleForm>
+        <a className="login" href={loginURL}>
+          Login
+        </a>
+      </div>
     );
   },
 
@@ -125,67 +106,6 @@ export let Login = React.createClass({
 
   renderForgotPassword: function() {
     return <Link to="/request-password-reset">Forgot your password?</Link>;
-  },
-
-  handleSubmit: function(formValues) {
-    var self = this;
-
-    if (this.props.working) {
-      return;
-    }
-
-    this.resetFormStateBeforeSubmit(formValues);
-
-    var validationErrors = this.validateFormValues(formValues);
-    if (!_.isEmpty(validationErrors)) {
-      return;
-    }
-
-    const { user, options } = this.prepareFormValuesForSubmit(formValues);
-
-    this.props.onSubmit(user, options);
-  },
-
-  resetFormStateBeforeSubmit: function(formValues) {
-    this.props.acknowledgeNotification('loggingIn');
-    this.setState({
-      formValues: formValues,
-      validationErrors: {},
-      notification: null
-    });
-  },
-
-  validateFormValues: function(formValues) {
-    var form = [
-      { type: 'name', name: 'password', label: 'this field', value: formValues.password },
-      { type: 'email', name: 'username', label: 'this field', value: formValues.username },
-    ];
-
-    var validationErrors = validateForm(form);
-
-    if (!_.isEmpty(validationErrors)) {
-      this.setState({
-        validationErrors: validationErrors,
-        notification: {
-          type: 'error',
-          message:'Some entries are invalid.'
-        }
-      });
-    }
-
-    return validationErrors;
-  },
-
-  prepareFormValuesForSubmit: function(formValues) {
-    return {
-      user: {
-        username: formValues.username,
-        password: formValues.password
-      },
-      options: {
-        remember: formValues.remember
-      }
-    };
   },
 
   doFetching: function(nextProps) {
