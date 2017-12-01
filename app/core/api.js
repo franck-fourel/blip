@@ -127,17 +127,23 @@ api.user.signup = function(user, cb) {
     });
 
     // Then, add additional user info (full name, etc.) to profile
-    tidepool.addOrUpdateProfile(userId, newProfile, function(err, results) {
-      if (err) {
-        return cb(err);
-      }
+    if (newProfile) {
+      tidepool.addOrUpdateProfile(userId, newProfile, function(err, results) {
+        if (err) {
+          return cb(err);
+        }
 
-      api.log('added profile info to signup', results);
+        api.log('added profile info to signup', results);
+        cb(null, userFromAccountAndProfile({
+          account: account,
+          profile: results
+        }));
+      });
+    } else {
       cb(null, userFromAccountAndProfile({
         account: account,
-        profile: results
       }));
-    });
+    }
   });
 };
 
@@ -186,7 +192,9 @@ api.user.get = function(cb) {
   // ...and user profile information (full name, etc.)
   var getProfile = function(cb) {
     tidepool.findProfile(userId, function(err, profile) {
-      if (err) {
+      // We don't want to fire an error if the patient has no profile saved yet,
+      // so we check if the error status is not 404 first.
+      if (err && err.status !== 404) {
         return cb(err);
       }
 
@@ -257,7 +265,9 @@ function profileFromUser(user) {
 function userFromAccountAndProfile(results) {
   // sometimes `account` isn't in the results after e.g., password update
   var account = results.account || {};
-  var profile = results.profile;
+
+  // sometimes `profile` isn't in the results after e.g., after account signup
+  var profile = results.profile || {};
 
   var user = account;
   user.profile = profile;
@@ -290,6 +300,58 @@ api.user.custodialConfirmSignUp = function(key, birthday, password, callback) {
   api.log('PUT /confirm/accept/signup/'+key, 'custodial');
   return tidepool.custodialSignupConfirm(key, birthday, password, callback);
 };
+
+
+// Get all patients in current user's "patients" group
+api.user.getDataDonationAccounts = function (cb) {
+  api.log('GET /patients');
+
+  tidepool.getAssociatedUsersDetails(tidepool.getUserId(), function (err, users) {
+    if (err) {
+      return cb(err);
+    }
+
+    //these are the accounts that have shared their data
+    //with a given set of permissions.
+    let dataDonationAccounts = _.filter(users, function (user) {
+      return personUtils.isDataDonationAccount(user);
+    });
+
+    dataDonationAccounts = _.map(dataDonationAccounts, function (user) {
+      return {
+        userid: user.userid,
+        email: user.username,
+        status: 'confirmed',
+      };
+    });
+
+    if (_.isEmpty(dataDonationAccounts)) {
+      return cb(null, []);
+    }
+
+    return cb(null, dataDonationAccounts);
+  });
+};
+
+api.user.getDataSources = function(cb) {
+  api.log('GET /v1/users/:userId/data_sources');
+
+  tidepool.getDataSourcesForUser(tidepool.getUserId(), cb);
+};
+
+api.user.createRestrictedToken = function(request, cb) {
+  api.log('POST /v1/users/:userId/restricted_tokens');
+
+  tidepool.createRestrictedTokenForUser(tidepool.getUserId(), request, cb);
+}
+
+api.user.createOAuthProviderAuthorization = function(provider, restrictedToken, cb) {
+  tidepool.createOAuthProviderAuthorization(provider, restrictedToken, cb);
+}
+
+api.user.deleteOAuthProviderAuthorization = function(provider, cb) {
+  tidepool.deleteOAuthProviderAuthorization(provider, cb);
+}
 
 // ----- Patient -----
 

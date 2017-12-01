@@ -13,7 +13,10 @@ import Patient from '../patient/';
  */
 let getFetchers = (dispatchProps, ownProps, api) => {
   return [
-    dispatchProps.fetchPatient.bind(null, api, ownProps.routeParams.id)
+    dispatchProps.fetchPatient.bind(null, api, ownProps.routeParams.id),
+    dispatchProps.fetchDataDonationAccounts.bind(null, api),
+    dispatchProps.fetchPendingSentInvites.bind(null, api),
+    dispatchProps.fetchDataSources.bind(null, api),
   ];
 };
 
@@ -23,9 +26,9 @@ export function mapStateToProps(state) {
   let permissions = {};
   let permsOfLoggedInUser = {};
 
-  let { 
-    allUsersMap, 
-    loggedInUserId, 
+  let {
+    allUsersMap,
+    loggedInUserId,
     currentPatientInViewId,
   } = state.blip;
 
@@ -60,23 +63,39 @@ export function mapStateToProps(state) {
     fetchingUser: state.blip.working.fetchingUser.inProgress,
     patient: { permissions, ...patient },
     permsOfLoggedInUser: permsOfLoggedInUser,
-    fetchingPatient: state.blip.working.fetchingPatient.inProgress
+    fetchingPatient: state.blip.working.fetchingPatient.inProgress,
+    dataDonationAccounts: state.blip.dataDonationAccounts,
+    updatingDataDonationAccounts: state.blip.working.updatingDataDonationAccounts.inProgress,
+    updatingPatientBgUnits: state.blip.working.updatingPatientBgUnits.inProgress,
+    dataSources: state.blip.dataSources || [],
+    authorizedDataSource: state.blip.authorizedDataSource,
   };
 }
 
 let mapDispatchToProps = dispatch => bindActionCreators({
   acknowledgeNotification: actions.sync.acknowledgeNotification,
+  fetchDataDonationAccounts: actions.async.fetchDataDonationAccounts,
   fetchPatient: actions.async.fetchPatient,
+  fetchPendingSentInvites: actions.async.fetchPendingSentInvites,
+  fetchDataSources: actions.async.fetchDataSources,
+  updateDataDonationAccounts: actions.async.updateDataDonationAccounts,
   updatePatient: actions.async.updatePatient,
   updatePatientSettings: actions.async.updateSettings,
+  fetchDataSources: actions.async.fetchDataSources,
+  connectDataSource: actions.async.connectDataSource,
+  disconnectDataSource: actions.async.disconnectDataSource,
 }, dispatch);
 
 let mergeProps = (stateProps, dispatchProps, ownProps) => {
   var api = ownProps.routes[0].api;
   return Object.assign({}, stateProps, _.pick(dispatchProps, 'acknowledgeNotification'), {
     fetchers: getFetchers(dispatchProps, ownProps, api),
+    onUpdateDataDonationAccounts: dispatchProps.updateDataDonationAccounts.bind(null, api),
     onUpdatePatient: dispatchProps.updatePatient.bind(null, api),
     onUpdatePatientSettings: dispatchProps.updatePatientSettings.bind(null, api),
+    fetchDataSources: dispatchProps.fetchDataSources.bind(null, api),
+    connectDataSource: dispatchProps.connectDataSource.bind(null, api),
+    disconnectDataSource: dispatchProps.disconnectDataSource.bind(null, api),
     trackMetric: ownProps.routes[0].trackMetric
   });
 };

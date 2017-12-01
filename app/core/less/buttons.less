@@ -33,9 +33,7 @@ a.btn {
 
   font-size: @font-size-small;
   line-height: (1.5*@spacing-base) - 2*@btn-border-size;
-  padding: 5px (1.5*@spacing-base - 2*@btn-border-size);
-
-  //font-weight: bold;
+  padding: 7px (1.5*@spacing-base - 2*@btn-border-size);
 
   &:hover,
   &:focus {
@@ -65,14 +63,12 @@ a.btn {
 .btn-primary,
 a.btn-primary {
   background-color: @purple;
-  //border-color: @purple;
-  color: #fff;
+  color: @white-color;
 
   &:hover,
   &:focus,
   &:active {
     background-color: @purple-dark;
-    //border-color: @purple-dark;
   }
 }
 
@@ -86,14 +82,14 @@ a.btn-secondary {
   &:hover,
   &:focus,
   &:active {
-    text-decoration: underline;
+    text-decoration: none;
     color: @purple;
   }
 }
 
 .btn-tertiary,
 a.btn-tertiary {
-  background-color: #fff;
+  background-color: @white-color;
   border-color: @blue-green;
   color: @blue-green;
 
@@ -105,10 +101,22 @@ a.btn-tertiary {
   }
 }
 
+.btn-danger,
+a.btn-danger {
+  background-color: @brand-coral;
+  color: @white-color;
+
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: @brand-orange;
+  }
+}
+
 .btn-chart,
 a.btn-chart {
   font-weight: normal;
-  background-color: #fff;
+  background-color: @white-color;
   border-color: fade(@purple-highcontrast, 15%);
   color: @purple-highcontrast;
 
@@ -136,6 +144,6 @@ a.btn-chart-control {
 
   &.active {
     background-color: @gray-dark;
-    color: #fff;
+    color: @white-color;
   }
 }

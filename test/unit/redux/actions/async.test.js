@@ -8,7 +8,7 @@
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import trackingMiddleware from '../../../../app/redux/utils/trackingMiddleware';
-
+import util from 'util';
 import _ from 'lodash';
 
 import isTSA from 'tidepool-standard-action';
@@ -17,6 +17,8 @@ import initialState from '../../../../app/redux/reducers/initialState';
 
 import * as ErrorMessages from '../../../../app/redux/constants/errorMessages';
 import * as UserMessages from '../../../../app/redux/constants/usrMessages';
+
+import { TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL, MMOLL_UNITS } from '../../../../app/core/constants';
 
 // need to require() async in order to rewire utils inside
 const async = require('../../../../app/redux/actions/async');
@@ -60,6 +62,36 @@ describe('Actions', () => {
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(trackMetric.calledWith('Signed Up')).to.be.true;
+      });
+
+      it('should trigger ACCEPT_TERMS_REQUEST if the user user accepted terms in the signup form', () => {
+        const acceptedDate = new Date().toISOString();
+        const loggedInUserId = false;
+        const termsData = { termsAccepted: acceptedDate };
+        const user = {
+          id: 27,
+        };
+
+        const initialStateForTest = _.merge({}, initialState, { blip: { loggedInUserId } });
+
+        const api = {
+          user: {
+            signup: sinon.stub().callsArgWith(1, null, user),
+            acceptTerms: sinon.stub().callsArgWith(1, null, user),
+          }
+        };
+
+        const accountDetails = {
+          termsAccepted: acceptedDate,
+        }
+
+        const store = mockStore(initialStateForTest);
+        store.dispatch(async.signup(api, accountDetails));
+
+        const actions = store.getActions();
+
+        const action = _.find(actions, { type: 'ACCEPT_TERMS_REQUEST' });
+        expect(isTSA(action)).to.be.true;
       });
 
       it('[409] should trigger SIGNUP_FAILURE and it should call signup once and get zero times for a failed signup request', () => {
@@ -390,6 +422,42 @@ describe('Actions', () => {
         expect(api.user.acceptTerms.callCount).to.equal(1);
       });
 
+      it('should trigger ACCEPT_TERMS_SUCCESS and should not trigger a route transition if the user is not logged in', () => {
+        let acceptedDate = new Date();
+        let loggedInUserId = false;
+        let termsData = { termsAccepted: new Date() };
+        let user = {
+          id: 27,
+          roles: ['clinic'],
+        };
+        let api = {
+          user: {
+            acceptTerms: sinon.stub().callsArgWith(1, null, user)
+          }
+        };
+
+        let expectedActions = [
+          { type: 'ACCEPT_TERMS_REQUEST' },
+          { type: 'ACCEPT_TERMS_SUCCESS', payload: { userId: user.id, acceptedDate: acceptedDate } },
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let initialStateForTest = _.merge({}, initialState, { blip: { loggedInUserId: loggedInUserId } });
+
+        let store = mockStore(initialStateForTest);
+        store.dispatch(async.acceptTerms(api, acceptedDate, user.id));
+
+        const actions = store.getActions();
+
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.acceptTerms.calledWith(termsData)).to.be.true;
+        expect(api.user.acceptTerms.callCount).to.equal(1);
+
+        expect(_.findWhere(actions, { type: '@@router/TRANSITION' })).to.be.undefined;
+      });
+
       it('should trigger ACCEPT_TERMS_FAILURE and it should call acceptTerms once for a failed request', () => {
         let acceptedDate = new Date();
         let termsData = { termsAccepted: acceptedDate };
@@ -485,6 +553,79 @@ describe('Actions', () => {
         expect(api.user.login.calledWith(creds)).to.be.true;
         expect(api.user.get.callCount).to.equal(1);
         expect(api.patient.get.callCount).to.equal(1);
+        expect(trackMetric.calledWith('Logged In')).to.be.true;
+      });
+
+      it('should trigger LOGIN_SUCCESS and it should redirect a clinician with no clinic profile to the clinician details form', () => {
+        const creds = { username: 'bruce', password: 'wayne' };
+        const user = { id: 27, roles: [ 'clinic' ], profile: {} };
+        const patient = { foo: 'bar' };
+
+        const api = {
+          user: {
+            login: sinon.stub().callsArgWith(2, null),
+            get: sinon.stub().callsArgWith(0, null, user)
+          },
+          patient: {
+            get: sinon.stub().callsArgWith(1, null, patient)
+          }
+        };
+
+        const expectedActions = [
+          { type: 'LOGIN_REQUEST' },
+          { type: 'LOGIN_SUCCESS', payload: { user } },
+          { type: '@@router/TRANSITION', payload: { method: 'push', args: [ '/clinician-details' ] } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        const store = mockStore(initialState);
+
+        store.dispatch(async.login(api, creds));
+
+        const actions = store.getActions();
+
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.login.calledWith(creds)).to.be.true;
+        expect(api.user.get.callCount).to.equal(1);
+        expect(trackMetric.calledWith('Logged In')).to.be.true;
+      });
+
+
+      it('should trigger LOGIN_SUCCESS and it should redirect a clinician with a clinic profile to the patients view', () => {
+        const creds = { username: 'bruce', password: 'wayne' };
+        const user = { id: 27, roles: ['clinic'], profile: { clinic: true } };
+        const patient = { foo: 'bar' };
+
+        const api = {
+          user: {
+            login: sinon.stub().callsArgWith(2, null),
+            get: sinon.stub().callsArgWith(0, null, user)
+          },
+          patient: {
+            get: sinon.stub().callsArgWith(1, null, patient)
+          }
+        };
+
+        const expectedActions = [
+          { type: 'LOGIN_REQUEST' },
+          { type: 'LOGIN_SUCCESS', payload: { user } },
+          { type: '@@router/TRANSITION', payload: { method: 'push', args: ['/patients?justLoggedIn=true'] } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        const store = mockStore(initialState);
+
+        store.dispatch(async.login(api, creds));
+
+        const actions = store.getActions();
+
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.login.calledWith(creds)).to.be.true;
+        expect(api.user.get.callCount).to.equal(1);
         expect(trackMetric.calledWith('Logged In')).to.be.true;
       });
 
@@ -798,7 +939,7 @@ describe('Actions', () => {
     });
 
     describe('removeMemberFromTargetCareTeam', () => {
-      it('should trigger REMOVE_MEMBER_FROM_TARGET_CARE_TEAM_SUCCESS and it should call removeMemberFromTargetCareTeam once for a successful request', () => {
+      it('should trigger REMOVE_MEMBER_FROM_TARGET_CARE_TEAM_SUCCESS and it should call api.access.removeMember and callback once for a successful request', () => {
         let memberId = 27;
         let patientId = 456;
         let patient = { id: 546, name: 'Frank' };
@@ -822,21 +963,27 @@ describe('Actions', () => {
         });
 
         let store = mockStore(initialState);
+        const callback = sinon.stub();
 
-        store.dispatch(async.removeMemberFromTargetCareTeam(api, patientId, memberId));
+        store.dispatch(async.removeMemberFromTargetCareTeam(api, patientId, memberId, callback));
 
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.access.removeMember.withArgs(memberId).callCount).to.equal(1);
         expect(api.patient.get.withArgs(patientId).callCount).to.equal(1);
+
+        // assert callback contains no error, and the memberId
+        sinon.assert.calledOnce(callback);
+        sinon.assert.calledWithExactly(callback, null, memberId);
       });
 
-      it('should trigger REMOVE_MEMBER_FROM_TARGET_CARE_TEAM_FAILURE and it should call removeMemberFromTargetCareTeam once for a failed request', () => {
+      it('should trigger REMOVE_MEMBER_FROM_TARGET_CARE_TEAM_FAILURE and it should call api.access.removeMember and callback once with error for a failed request', () => {
         let memberId = 27;
         let patientId = 420;
+        const error = { status: 500, body: 'Error!' };
         let api = {
           access: {
-            removeMember: sinon.stub().callsArgWith(1, {status: 500, body: 'Error!'})
+            removeMember: sinon.stub().callsArgWith(1, error)
           }
         };
 
@@ -852,16 +999,22 @@ describe('Actions', () => {
         });
 
         let store = mockStore(initialState);
-        store.dispatch(async.removeMemberFromTargetCareTeam(api, patientId, memberId));
+        const callback = sinon.stub();
+
+        store.dispatch(async.removeMemberFromTargetCareTeam(api, patientId, memberId, callback));
 
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.access.removeMember.calledWith(memberId)).to.be.true;
+
+        // assert callback contains the error
+        sinon.assert.calledOnce(callback);
+        sinon.assert.calledWithExactly(callback, error, memberId);
       });
     });
 
     describe('sendInvite', () => {
-      it('should trigger SEND_INVITE_SUCCESS and it should call sendInvite once for a successful request', () => {
+      it('should trigger SEND_INVITE_SUCCESS and it should call api.invitation.send and callback once for a successful request', () => {
         let email = 'a@b.com';
         let permissions = {
           view: true
@@ -881,11 +1034,52 @@ describe('Actions', () => {
           expect(isTSA(action)).to.be.true;
         });
         let store = mockStore(initialState);
-        store.dispatch(async.sendInvite(api, email, permissions));
+        const callback = sinon.stub();
+
+        store.dispatch(async.sendInvite(api, email, permissions, callback));
 
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.invitation.send.calledWith(email, permissions)).to.be.true;
+
+        // assert callback contains no error, and the invite
+        sinon.assert.calledOnce(callback);
+        sinon.assert.calledWithExactly(callback, null, invite);
+      });
+
+      it('should trigger FETCH_PENDING_SENT_INVITES_REQUEST once for a successful request for a data donation account', () => {
+        let email = 'a@b.com';
+        let permissions = {
+          view: true
+        };
+        let invite = { email: TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL };
+        let api = {
+          invitation: {
+            send: sinon.stub().callsArgWith(2, null, invite),
+            getSent: sinon.stub(),
+          }
+        };
+
+        let expectedActions = [
+          { type: 'SEND_INVITE_REQUEST' },
+          { type: 'FETCH_PENDING_SENT_INVITES_REQUEST' },
+          { type: 'SEND_INVITE_SUCCESS', payload: { invite: invite } },
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        const callback = sinon.stub();
+
+        store.dispatch(async.sendInvite(api, email, permissions, callback));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.invitation.send.calledWith(email, permissions)).to.be.true;
+
+        // assert callback contains no error, and the invite
+        sinon.assert.calledOnce(callback);
+        sinon.assert.calledWithExactly(callback, null, invite);
       });
 
       it('should trigger SEND_INVITE_FAILURE when invite has already been sent to the e-mail', () => {
@@ -894,9 +1088,10 @@ describe('Actions', () => {
           view: true
         };
         let invitation = { foo: 'bar' };
+        const error = { status: 409, body: 'Error!' };
         let api = {
           invitation: {
-            send: sinon.stub().callsArgWith(2, {status: 409, body: 'Error!'})
+            send: sinon.stub().callsArgWith(2, error)
           }
         };
 
@@ -912,22 +1107,29 @@ describe('Actions', () => {
         });
 
         let store = mockStore(initialState);
-        store.dispatch(async.sendInvite(api, email, permissions));
+        const callback = sinon.stub();
+
+        store.dispatch(async.sendInvite(api, email, permissions, callback));
 
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.invitation.send.calledWith(email, permissions)).to.be.true;
+
+        // assert callback contains the error
+        sinon.assert.calledOnce(callback);
+        sinon.assert.calledWithExactly(callback, error, undefined);
       });
 
-      it('should trigger SEND_INVITE_FAILURE and it should call sendInvite once for a failed request', () => {
+      it('should trigger SEND_INVITE_FAILURE and it should call api.invitation.send and callback once with error for a failed request', () => {
         let email = 'a@b.com';
         let permissions = {
           view: true
         };
         let invitation = { foo: 'bar' };
+        const error = { status: 500, body: 'Error!' };
         let api = {
           invitation: {
-            send: sinon.stub().callsArgWith(2, {status: 500, body: 'Error!'})
+            send: sinon.stub().callsArgWith(2, error)
           }
         };
 
@@ -943,16 +1145,22 @@ describe('Actions', () => {
         });
 
         let store = mockStore(initialState);
-        store.dispatch(async.sendInvite(api, email, permissions));
+        const callback = sinon.stub();
+
+        store.dispatch(async.sendInvite(api, email, permissions, callback));
 
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.invitation.send.calledWith(email, permissions)).to.be.true;
+
+        // assert callback contains the error
+        sinon.assert.calledOnce(callback);
+        sinon.assert.calledWithExactly(callback, error, undefined);
       });
     });
 
     describe('cancelSentInvite', () => {
-      it('should trigger CANCEL_SENT_INVITE_SUCCESS and it should call cancelSentInvite once for a successful request', () => {
+      it('should trigger CANCEL_SENT_INVITE_SUCCESS and it should call api.invitation.cancel and callback once for a successful request', () => {
         let email = 'a@b.com';
         let api = {
           invitation: {
@@ -968,18 +1176,25 @@ describe('Actions', () => {
           expect(isTSA(action)).to.be.true;
         });
         let store = mockStore(initialState);
-        store.dispatch(async.cancelSentInvite(api, email));
+        const callback = sinon.stub();
+
+        store.dispatch(async.cancelSentInvite(api, email, callback));
 
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.invitation.cancel.calledWith(email)).to.be.true;
+
+        // assert callback contains no error, and the email
+        sinon.assert.calledOnce(callback);
+        sinon.assert.calledWithExactly(callback, null, email);
       });
 
-      it('should trigger CANCEL_SENT_INVITE_FAILURE and it should call cancelSentInvite once for a failed request', () => {
+      it('should trigger CANCEL_SENT_INVITE_FAILURE and it should call api.invitation.send and callback once with error for a failed request', () => {
         let email = 'a@b.com';
+        const error = { status: 500, body: 'Error!' };
         let api = {
           invitation: {
-            cancel: sinon.stub().callsArgWith(1, {status: 500, body: 'Error!'})
+            cancel: sinon.stub().callsArgWith(1, error)
           }
         };
 
@@ -995,11 +1210,167 @@ describe('Actions', () => {
         });
 
         let store = mockStore(initialState);
-        store.dispatch(async.cancelSentInvite(api, email));
+        const callback = sinon.stub();
+
+        store.dispatch(async.cancelSentInvite(api, email, callback));
 
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.invitation.cancel.calledWith(email)).to.be.true;
+
+        // assert callback contains the error
+        sinon.assert.calledOnce(callback);
+        sinon.assert.calledWithExactly(callback, error, email);
+      });
+    });
+
+    describe('fetchDataDonationAccounts', () => {
+      it('should trigger FETCH_DATA_DONATION_ACCOUNTS_SUCCESS and it should call api.user.getDataDonationAccounts once for a successful request', () => {
+        let dataDonationAccounts = [
+          { email: 'bigdata@tidepool.org' },
+          { email: 'bigdata+ZZZ@tidepool.org' },
+        ];
+
+        let api = {
+          user: {
+            getDataDonationAccounts: sinon.stub().callsArgWith(0, null, dataDonationAccounts)
+          }
+        };
+
+        let expectedActions = [
+          { type: 'FETCH_DATA_DONATION_ACCOUNTS_REQUEST' },
+          { type: 'FETCH_DATA_DONATION_ACCOUNTS_SUCCESS', payload: { accounts: dataDonationAccounts } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.fetchDataDonationAccounts(api));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.getDataDonationAccounts.callCount).to.equal(1);
+      });
+
+      it('should trigger FETCH_DATA_DONATION_ACCOUNTS_FAILURE and it should call error once for a failed request', () => {
+        let dataDonationAccounts = [
+          { email: 'bigdata@tidepool.org' },
+          { email: 'bigdata+ZZZ@tidepool.org' },
+        ];
+
+        let api = {
+          user: {
+            getDataDonationAccounts: sinon.stub().callsArgWith(0, { status: 500, body: 'Error!' }, null)
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_FETCHING_DATA_DONATION_ACCOUNTS);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'FETCH_DATA_DONATION_ACCOUNTS_REQUEST' },
+          { type: 'FETCH_DATA_DONATION_ACCOUNTS_FAILURE', error: err, meta: { apiError: { status: 500, body: 'Error!' } } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.fetchDataDonationAccounts(api));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.getDataDonationAccounts.callCount).to.equal(1);
+      });
+    });
+
+    describe('updateDataDonationAccounts', () => {
+      it('should trigger UPDATE_DATA_DONATION_ACCOUNTS_SUCCESS and it should add and remove accounts for a successful request', () => {
+        let addAccounts = [
+          TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL,
+        ];
+
+        let removeAccounts = [
+          { email: 'bigdata+ZZZ@tidepool.org' },
+        ];
+
+        let api = {
+          invitation: {
+            send: sinon.stub().callsArgWith(2, null, { email: TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL }),
+            cancel: sinon.stub().callsArgWith(1, null, { removedEmail: 'bigdata+ZZZ@tidepool.org' }),
+            getSent: sinon.stub(),
+          }
+        };
+
+        let expectedActions = [
+          { type: 'UPDATE_DATA_DONATION_ACCOUNTS_REQUEST' },
+          { type: 'SEND_INVITE_REQUEST'},
+          { type: 'FETCH_PENDING_SENT_INVITES_REQUEST'},
+          { type: 'SEND_INVITE_SUCCESS', payload: { invite: { email: TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL } } },
+          { type: 'CANCEL_SENT_INVITE_REQUEST' },
+          { type: 'CANCEL_SENT_INVITE_SUCCESS', payload: { removedEmail: 'bigdata+ZZZ@tidepool.org' } },
+          { type: 'UPDATE_DATA_DONATION_ACCOUNTS_SUCCESS', payload: { accounts: {
+            addAccounts: _.map(addAccounts, email => ({ email: email })),
+            removeAccounts: _.map(removeAccounts, account => account.email),
+          }}}
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(_.assign({}, initialState, {
+          blip: { loggedInUserId: 1234 },
+        }));
+
+        store.dispatch(async.updateDataDonationAccounts(api, addAccounts, removeAccounts));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+      });
+
+      it('should trigger FETCH_DATA_DONATION_ACCOUNTS_FAILURE and it should call error once for a failed add account request', () => {
+        let addAccounts = [
+          TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL,
+        ];
+
+        let removeAccounts = [
+          { email: 'bigdata+ZZZ@tidepool.org' },
+        ];
+
+        let err = new Error(ErrorMessages.ERR_UPDATING_DATA_DONATION_ACCOUNTS);
+        err.status = 500;
+
+        let sendErr = new Error(ErrorMessages.ERR_SENDING_INVITE);
+        sendErr.status = 500;
+
+        let api = {
+          invitation: {
+            send: sinon.stub().callsArgWith(2, { status: 500, body: 'Error!' } , null),
+            cancel: sinon.stub().callsArgWith(1, null, { removedEmail: 'bigdata+ZZZ@tidepool.org' }),
+            getSent: sinon.stub(),
+          }
+        };
+
+        let expectedActions = [
+          { type: 'UPDATE_DATA_DONATION_ACCOUNTS_REQUEST' },
+          { type: 'SEND_INVITE_REQUEST' },
+          { type: 'UPDATE_DATA_DONATION_ACCOUNTS_FAILURE', error: err, meta: { apiError: { status: 500, body: 'Error!' } } },
+          { type: 'SEND_INVITE_FAILURE', error: sendErr, meta: { apiError: { status: 500, body: 'Error!' } } },
+          { type: 'CANCEL_SENT_INVITE_REQUEST' },
+          { type: 'CANCEL_SENT_INVITE_SUCCESS', payload: { removedEmail: 'bigdata+ZZZ@tidepool.org' } },
+        ];
+
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(_.assign({}, initialState, {
+          blip: { loggedInUserId: 1234 },
+        }));
+
+        store.dispatch(async.updateDataDonationAccounts(api, addAccounts, removeAccounts));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
       });
     });
 
@@ -1324,6 +1695,36 @@ describe('Actions', () => {
         expect(api.metadata.settings.put.calledWith(patientId, settings)).to.be.true;
       });
 
+      it('should trigger UPDATE_PATIENT_BG_UNITS_REQUEST when bg units are being updated', () => {
+          let patientId = 1234;
+          let settings = { units: { bg: MMOLL_UNITS} };
+          let api = {
+            metadata: {
+              settings: {
+                put: sinon.stub().callsArgWith(2, null, settings)
+              }
+            }
+          };
+
+          let expectedActions = [
+            { type: 'UPDATE_SETTINGS_REQUEST' },
+            { type: 'UPDATE_PATIENT_BG_UNITS_REQUEST' },
+            { type: 'UPDATE_SETTINGS_SUCCESS', payload: { userId: patientId, updatedSettings: settings } },
+            { type: 'UPDATE_PATIENT_BG_UNITS_SUCCESS', payload: { userId: patientId, updatedSettings: settings } },
+          ];
+
+          _.each(expectedActions, (action) => {
+            expect(isTSA(action)).to.be.true;
+          });
+
+          let store = mockStore(initialState);
+          store.dispatch(async.updateSettings(api, patientId, settings));
+
+          const actions = store.getActions();
+          expect(actions).to.eql(expectedActions);
+          expect(api.metadata.settings.put.calledWith(patientId, settings)).to.be.true;
+      });
+
       it('should trigger UPDATE_SETTINGS_FAILURE and it should call updateSettings once for a failed request', () => {
         let patientId = 1234;
         let settings = { siteChangeSource: 'cannulaPrime' };
@@ -1342,6 +1743,39 @@ describe('Actions', () => {
           { type: 'UPDATE_SETTINGS_REQUEST' },
           { type: 'UPDATE_SETTINGS_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } }
         ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.updateSettings(api, patientId, settings));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.metadata.settings.put.calledWith(patientId, settings)).to.be.true;
+      });
+
+      it('should trigger UPDATE_PATIENT_BG_UNITS_FAILURE and it should call updateSettings once for a failed request', () => {
+        let patientId = 1234;
+        let settings = { units: { bg: MMOLL_UNITS} };
+        let api = {
+          metadata: {
+            settings: {
+              put: sinon.stub().callsArgWith(2, {status: 500, body: 'Error!'})
+            }
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_UPDATING_SETTINGS);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'UPDATE_SETTINGS_REQUEST' },
+          { type: 'UPDATE_PATIENT_BG_UNITS_REQUEST' },
+          { type: 'UPDATE_SETTINGS_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } },
+          { type: 'UPDATE_PATIENT_BG_UNITS_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } },
+        ];
+
         _.each(expectedActions, (action) => {
           expect(isTSA(action)).to.be.true;
         });
@@ -2455,6 +2889,220 @@ describe('Actions', () => {
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.team.getMessageThread.withArgs(400).callCount).to.equal(1);
+      });
+    });
+
+    describe('fetchDataSources', () => {
+      it('should trigger FETCH_DATA_SOURCES_SUCCESS and it should call error once for a successful request', () => {
+        let dataSources = [
+          { id: 'strava' },
+          { id: 'fitbit' },
+        ];
+
+        let api = {
+          user: {
+            getDataSources: sinon.stub().callsArgWith(0, null, dataSources)
+          }
+        };
+
+        let expectedActions = [
+          { type: 'FETCH_DATA_SOURCES_REQUEST' },
+          { type: 'FETCH_DATA_SOURCES_SUCCESS', payload: { dataSources : dataSources } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.fetchDataSources(api));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.getDataSources.callCount).to.equal(1);
+      });
+
+      it('should trigger FETCH_DATA_SOURCES_FAILURE and it should call error once for a failed request', () => {
+        let api = {
+          user: {
+            getDataSources: sinon.stub().callsArgWith(0, {status: 500, body: 'Error!'}, null)
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_FETCHING_DATA_SOURCES);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'FETCH_DATA_SOURCES_REQUEST' },
+          { type: 'FETCH_DATA_SOURCES_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.fetchDataSources(api));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.getDataSources.callCount).to.equal(1);
+      });
+    });
+
+    describe('connectDataSource', () => {
+      it('should trigger CONNECT_DATA_SOURCE_SUCCESS and it should call error once for a successful request', () => {
+        let restrictedToken = { id: 'blah.blah.blah'};
+        let url = 'fitbit.url';
+        let api = {
+          user: {
+            createRestrictedToken: sinon.stub().callsArgWith(1, null, restrictedToken),
+            createOAuthProviderAuthorization: sinon.stub().callsArgWith(2, null, url),
+          }
+        };
+
+        let expectedActions = [
+          { type: 'CONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'CONNECT_DATA_SOURCE_SUCCESS', payload: {
+            authorizedDataSource : { id: 'fitbit', url: url}}
+          }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.connectDataSource(api, 'fitbit', { path: [ '/v1/oauth/fitbit' ] }, { providerType: 'oauth', providerName: 'fitbit' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.createRestrictedToken.withArgs({ path: [ '/v1/oauth/fitbit' ] }).callCount).to.equal(1);
+        expect(api.user.createOAuthProviderAuthorization.withArgs('fitbit', restrictedToken.id).callCount).to.equal(1);
+      });
+
+      it('should trigger CONNECT_DATA_SOURCE_FAILURE and it should call error once for an unexpected provider type', () => {
+        let api = {
+          user: {
+            createRestrictedToken: sinon.stub(),
+            createOAuthProviderAuthorization: sinon.stub(),
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_CONNECTING_DATA_SOURCE);
+
+        let expectedActions = [
+          { type: 'CONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'CONNECT_DATA_SOURCE_FAILURE', error: err, meta: { apiError: 'Unknown data source type' } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.connectDataSource(api, 'strava', { path: [ '/v1/oauth/strava' ] }, { providerType: 'unexpected', providerName: 'strava' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.createRestrictedToken.callCount).to.equal(0);
+        expect(api.user.createOAuthProviderAuthorization.callCount).to.equal(0);
+      });
+
+      it('should trigger CONNECT_DATA_SOURCE_FAILURE and it should call error once for a failed request', () => {
+        let api = {
+          user: {
+            createRestrictedToken: sinon.stub().callsArgWith(1, {status: 500, body: 'Error!'}, null),
+            createOAuthProviderAuthorization: sinon.stub(),
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_CONNECTING_DATA_SOURCE);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'CONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'CONNECT_DATA_SOURCE_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.connectDataSource(api, 'strava', { path: [ '/v1/oauth/strava' ] }, { providerType: 'oauth', providerName: 'strava' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.createRestrictedToken.withArgs({ path: [ '/v1/oauth/strava' ] }).callCount).to.equal(1);
+        expect(api.user.createOAuthProviderAuthorization.callCount).to.equal(0);
+      });
+    });
+
+    describe('disconnectDataSource', () => {
+      it('should trigger DISCONNECT_DATA_SOURCE_SUCCESS and it should call error once for a successful request', () => {
+        let restrictedToken = { id: 'blah.blah.blah'};
+        let api = {
+          user: {
+            deleteOAuthProviderAuthorization: sinon.stub().callsArgWith(1, null, restrictedToken),
+          }
+        };
+
+        let expectedActions = [
+          { type: 'DISCONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'DISCONNECT_DATA_SOURCE_SUCCESS', payload: {}}
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.disconnectDataSource(api, 'fitbit', { providerType: 'oauth', providerName: 'fitbit' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.deleteOAuthProviderAuthorization.withArgs('fitbit').callCount).to.equal(1);
+      });
+
+      it('should trigger DISCONNECT_DATA_SOURCE_FAILURE and it should call error once for an unexpected provider type', () => {
+        let api = {
+          user: {
+            deleteOAuthProviderAuthorization: sinon.stub(),
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_CONNECTING_DATA_SOURCE);
+
+        let expectedActions = [
+          { type: 'DISCONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'DISCONNECT_DATA_SOURCE_FAILURE', error: err, meta: { apiError: 'Unknown data source type' } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.disconnectDataSource(api, 'strava', { providerType: 'unexpected', providerName: 'strava' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.deleteOAuthProviderAuthorization.callCount).to.equal(0);
+      });
+
+      it('should trigger DISCONNECT_DATA_SOURCE_FAILURE and it should call error once for a failed request', () => {
+        let api = {
+          user: {
+            deleteOAuthProviderAuthorization: sinon.stub().callsArgWith(1, {status: 500, body: 'Error!'}, null),
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_CONNECTING_DATA_SOURCE);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'DISCONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'DISCONNECT_DATA_SOURCE_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.disconnectDataSource(api, 'strava', { providerType: 'oauth', providerName: 'strava' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.deleteOAuthProviderAuthorization.withArgs('strava').callCount).to.equal(1);
       });
     });
   });

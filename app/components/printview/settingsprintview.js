@@ -18,6 +18,7 @@
 import _ from 'lodash';
 import bows from 'bows';
 import React from 'react';
+import { noop } from 'node-noop';
 
 import PrintHeader from '../printheader';
 
@@ -49,8 +50,8 @@ const SettingsPrintView = React.createClass({
     );
   },
   render: function() {
-    const mostRecentSettings = _.last(this.props.patientData.grouped.pumpSettings);
-    const manufacturer = _.get(mostRecentSettings, 'source').toLowerCase();
+    const mostRecentSettings = _.last(this.props.patientData.grouped.pumpSettings) || {};
+    const manufacturer = _.get(mostRecentSettings, 'source', '').toLowerCase();
 
     return (
       <div id="app-print" className="print-view-content">
@@ -58,6 +59,7 @@ const SettingsPrintView = React.createClass({
         <div className="print-view-page print-view-page-device-settings">
           <PumpSettingsContainer
             currentPatientInViewId={this.props.currentPatientInViewId}
+            copySettingsClicked={noop}
             bgUnits={this.props.bgPrefs.bgUnits}
             manufacturerKey={manufacturer}
             pumpSettings={mostRecentSettings}

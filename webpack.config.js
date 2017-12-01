@@ -1,6 +1,11 @@
 var path = require('path');
 var webpack = require('webpack');
 var ExtractTextPlugin = require('extract-text-webpack-plugin');
+var CopyWebpackPlugin = require('copy-webpack-plugin');
+var HtmlWebpackPlugin = require('html-webpack-plugin');
+var HtmlWebpackIncludeAssetsPlugin = require('html-webpack-include-assets-plugin');
+var uglifyJS = require('uglify-es');
+var fs = require('fs');
 
 var isDev = (process.env.NODE_ENV === 'development');
 // these values are required in the config.app.js file -- we can't use
@@ -22,7 +27,33 @@ var defineEnvPlugin = new webpack.DefinePlugin({
   __DEV_TOOLS__: (process.env.DEV_TOOLS != null) ? process.env.DEV_TOOLS : (isDev ? true : false)
 });
 
-var plugins = [ defineEnvPlugin, new ExtractTextPlugin('style.[contenthash].css') ];
+var plugins = [
+  defineEnvPlugin,
+  new ExtractTextPlugin('style.[contenthash].css'),
+  new CopyWebpackPlugin([
+    {
+      from: 'static',
+      transform: (content, path) => {
+        if (isDev) {
+         return content;
+        }
+
+        var code = fs.readFileSync(path, 'utf8');
+        var result = uglifyJS.minify(code);
+        return result.code;
+      }
+    }
+  ]),
+  new HtmlWebpackPlugin({
+    template: 'index.ejs',
+  }),
+  new HtmlWebpackIncludeAssetsPlugin({
+    assets: ['pdfkit.js', 'blob-stream.js'],
+    hash: true,
+    append: true,
+  })
+];
+
 var entryScripts = ['babel-polyfill', './app/main.prod.js'];
 var loaders = [
   // the JSX in tideline needs transpiling
@@ -40,7 +71,8 @@ var loaders = [
 
 var output = {
   path: path.join(__dirname, '/dist'),
-  filename: 'bundle.js'
+  filename: 'bundle.js',
+  publicPath: '/',
 }
 
 if (isDev) {
@@ -50,7 +82,7 @@ if (isDev) {
     'babel-polyfill',
     'webpack-dev-server/client?http://localhost:3000',
     'webpack/hot/only-dev-server',
-    './app/main.js'
+    './app/main.js',
   ];
   loaders.push({test: /\.less$/, loaders: ['style-loader', 'css-loader', 'postcss-loader', 'less-loader']});
   loaders.push({test: /\.js$/, exclude: /(node_modules)/, loaders: ['babel-loader']});
@@ -76,6 +108,7 @@ module.exports = {
     root: path.resolve('./node_modules'),
     fallback: path.join(__dirname, 'node_modules'),
   },
+  devtool: process.env.WEBPACK_DEVTOOL || 'eval-source-map',
   devServer: {
     publicPath: output.publicPath,
     hot: true,

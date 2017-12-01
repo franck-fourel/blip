@@ -21,21 +21,35 @@ var sundial = require('sundial');
 
 var personUtils = require('../../core/personutils');
 import PatientSettings from './patientsettings';
+import PatientBgUnits from '../../components/patientBgUnits';
+import DonateForm from '../../components/donateform';
+import DataSources from '../../components/datasources';
 
 //date masks we use
 var FORM_DATE_FORMAT = 'MM/DD/YYYY';
 var SERVER_DATE_FORMAT = 'YYYY-MM-DD';
 
 var PatientInfo = React.createClass({
+  // many things *not* required here because they aren't needed for
+  // /patients/:id/profile although they are for /patients/:id/share (or vice-versa)
   propTypes: {
+    dataDonationAccounts: React.PropTypes.array,
     fetchingPatient: React.PropTypes.bool.isRequired,
     fetchingUser: React.PropTypes.bool.isRequired,
+    onUpdateDataDonationAccounts: React.PropTypes.func,
     onUpdatePatient: React.PropTypes.func.isRequired,
-    onUpdatePatientSettings: React.PropTypes.func.isRequired,
-    permsOfLoggedInUser: React.PropTypes.object.isRequired,
+    onUpdatePatientSettings: React.PropTypes.func,
+    permsOfLoggedInUser: React.PropTypes.object,
     patient: React.PropTypes.object,
     trackMetric: React.PropTypes.func.isRequired,
-    user: React.PropTypes.object
+    updatingDataDonationAccounts: React.PropTypes.bool,
+    updatingPatientBgUnits: React.PropTypes.bool,
+    user: React.PropTypes.object,
+    dataSources: React.PropTypes.array,
+    fetchDataSources: React.PropTypes.func,
+    connectDataSource: React.PropTypes.func,
+    disconnectDataSource: React.PropTypes.func,
+    authorizedDataSource: React.PropTypes.object,
   },
 
   getInitialState: function() {
@@ -125,12 +139,10 @@ var PatientInfo = React.createClass({
             {this.getAboutText(patient)}
           </div>
         </div>
-        <PatientSettings
-          editingAllowed={this.isEditingAllowed(this.props.permsOfLoggedInUser)}
-          patient={this.props.patient}
-          onUpdatePatientSettings={this.props.onUpdatePatientSettings}
-          trackMetric={this.props.trackMetric}
-          />
+        {this.renderPatientSettings()}
+        {this.renderBgUnitSettings()}
+        {this.renderDonateForm()}
+        {this.renderDataSources()}
       </div>
     );
   },
@@ -217,18 +229,15 @@ var PatientInfo = React.createClass({
           </div>
           {this.renderAboutInput(formValues)}
         </div>
-        <PatientSettings
-          editingAllowed={this.isEditingAllowed(this.props.permsOfLoggedInUser)}
-          patient={this.props.patient}
-          onUpdatePatientSettings={this.props.onUpdatePatientSettings}
-          trackMetric={this.props.trackMetric}
-          />
+        {this.renderPatientSettings()}
+        {this.renderBgUnitSettings()}
+        {this.renderDonateForm()}
+        {this.renderDataSources()}
       </div>
     );
   },
 
   renderFullNameInput: function(formValues) {
-    
     var fullNameNode, errorElem, classes;
     var error = this.state.validationErrors.fullName;
     // Legacy: revisit when proper "child accounts" are implemented
@@ -320,6 +329,76 @@ var PatientInfo = React.createClass({
     );
   },
 
+  renderPatientSettings: function() {
+    return (
+      <PatientSettings
+        editingAllowed={this.isEditingAllowed(this.props.permsOfLoggedInUser)}
+        onUpdatePatientSettings={this.props.onUpdatePatientSettings}
+        patient={this.props.patient}
+        trackMetric={this.props.trackMetric}
+      />
+    );
+  },
+
+  renderBgUnitSettings: function() {
+    return (
+      <div className="PatientPage-bgUnitSettings">
+        <div className="PatientPage-sectionTitle">The units I use are</div>
+        <div className="PatientInfo-content">
+          <PatientBgUnits
+            editingAllowed={this.isEditingAllowed(this.props.permsOfLoggedInUser)}
+            onUpdatePatientSettings={this.props.onUpdatePatientSettings}
+            patient={this.props.patient}
+            trackMetric={this.props.trackMetric}
+            working={this.props.updatingPatientBgUnits || false}
+          />
+        </div>
+      </div>
+    );
+  },
+
+  renderDonateForm: function() {
+    if (this.isSamePersonUserAndPatient()) {
+      return (
+        <div className="PatientPage-donateForm">
+          <div className="PatientPage-sectionTitle">Donate my data?</div>
+          <div className="PatientInfo-content">
+            <DonateForm
+              dataDonationAccounts={this.props.dataDonationAccounts || []}
+              onUpdateDataDonationAccounts={this.props.onUpdateDataDonationAccounts}
+              working={this.props.updatingDataDonationAccounts || false}
+              trackMetric={this.props.trackMetric}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  },
+
+  renderDataSources: function() {
+    if (this.isSamePersonUserAndPatient()) {
+      return (
+        <div className="PatientPage-dataSources">
+          <div className="PatientPage-sectionTitle">My Data Sources</div>
+          <div className="PatientInfo-content">
+            <DataSources
+              dataSources={this.props.dataSources}
+              fetchDataSources={this.props.fetchDataSources}
+              connectDataSource={this.props.connectDataSource}
+              disconnectDataSource={this.props.disconnectDataSource}
+              authorizedDataSource={this.props.authorizedDataSource}
+              trackMetric={this.props.trackMetric}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  },
+
   isSamePersonUserAndPatient: function() {
     return personUtils.isSame(this.props.user, this.props.patient);
   },
@@ -343,11 +422,11 @@ var PatientInfo = React.createClass({
     if (!birthday) {
       return;
     }
-    
+
     var now = new Date();
     currentDate = currentDate || Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
     var yrsAgo = sundial.dateDifference(currentDate, birthday, 'years');
-    
+
     if (yrsAgo === 1) {
       return '1 year old';
     } else if (yrsAgo > 1) {
@@ -357,7 +436,6 @@ var PatientInfo = React.createClass({
     } else {
       return 'Birthdate not known';
     }
-
   },
 
   getDiagnosisText: function(patient, currentDate) {
@@ -368,7 +446,6 @@ var PatientInfo = React.createClass({
       return;
     }
 
-    
     var now = new Date();
     currentDate = currentDate || Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
     var yrsAgo = sundial.dateDifference(currentDate, diagnosisDate, 'years');
@@ -392,11 +469,11 @@ var PatientInfo = React.createClass({
   },
 
   /**
-   * Given a patient object, extract the values from it 
+   * Given a patient object, extract the values from it
    * that needs to be displayed on the patientinfo form
-   * 
+   *
    * @param  {Object} patient
-   * @return {Object} 
+   * @return {Object}
    */
   formValuesFromPatient: function(patient) {
     if (!_.isPlainObject(patient) || _.isEmpty(patient)) {
@@ -433,10 +510,10 @@ var PatientInfo = React.createClass({
     var formValues = this.getFormValues();
 
     this.setState({validationErrors: {}});
-   
+
     var isNameRequired = personUtils.patientIsOtherPerson(this.props.patient);
     var validationErrors = personUtils.validateFormValues(formValues, isNameRequired,  FORM_DATE_FORMAT);
-    
+
     if (!_.isEmpty(validationErrors)) {
       this.setState({
         validationErrors: validationErrors

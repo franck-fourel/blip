@@ -39,8 +39,12 @@ import {
   resentEmailVerification,
   sentEmailVerification,
   showingWelcomeMessage,
+  showingDonateBanner,
   timePrefs,
-  signupKey
+  signupKey,
+  dataDonationAccounts,
+  dataSources,
+  authorizedDataSource,
 } from './misc';
 
 export default combineReducers({
@@ -64,7 +68,11 @@ export default combineReducers({
   resentEmailVerification,
   sentEmailVerification,
   showingWelcomeMessage,
+  showingDonateBanner,
   timePrefs,
   signupKey,
-  working
+  dataDonationAccounts,
+  dataSources,
+  authorizedDataSource,
+  working,
 });

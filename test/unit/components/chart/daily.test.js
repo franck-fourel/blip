@@ -11,12 +11,33 @@ var _ = require('lodash');
 var expect = chai.expect;
 
 import Daily from '../../../../app/components/chart/daily';
+import { MGDL_UNITS } from '../../../../app/core/constants';
 
 require('tideline/css/tideline.less');
 require('../../../../app/core/less/fonts.less');
 require('../../../../app/style.less');
 
 describe('Daily', function () {
+  const bgPrefs = {
+    bgClasses: {
+      'very-low': {
+        boundary: 60
+      },
+      'low': {
+        boundary: 80
+      },
+      'target': {
+        boundary: 180
+      },
+      'high': {
+        boundary: 200
+      },
+      'very-high': {
+        boundary: 300
+      }
+    },
+    bgUnits: MGDL_UNITS
+  };
 
   before(() => {
     Daily.__Rewire__('DailyChart', React.createClass({
@@ -34,26 +55,7 @@ describe('Daily', function () {
     it('should render without problems', function () {
       console.error = sinon.stub();
       var props = {
-        bgPrefs: {
-          bgClasses: {
-            'very-low': {
-              boundary: 60
-            },
-            'low': {
-              boundary: 80
-            },
-            'target': {
-              boundary: 180
-            },
-            'high': {
-              boundary: 200
-            },
-            'very-high': {
-              boundary: 300
-            }
-          },
-          bgUnits: 'mg/dL'
-        },
+        bgPrefs,
         chartPrefs: {
           trends: {
             activeDays: {
@@ -80,11 +82,13 @@ describe('Daily', function () {
         patientData: {
           grouped: { foo: 'bar' }
         },
+        pdf: {},
         onClickRefresh: function() {},
         onCreateMessage: function() {},
         onShowMessageThread: function() {},
         onSwitchToBasics: function() {},
         onSwitchToDaily: function() {},
+        onSwitchToPrint: function() {},
         onSwitchToSettings: function() {},
         onSwitchToWeekly: function() {},
         updateDatetimeLocation: function() {},
@@ -106,12 +110,12 @@ describe('Daily', function () {
 
     it('should have a refresh button which should call onClickRefresh when clicked', function () {
       var props = {
-        bgPrefs: {},
+        bgPrefs,
         chartPrefs: {},
         timePrefs: {},
         initialDateTimeLocation: 'foo',
-        patientData: {
-        },
+        patientData: {},
+        pdf: {},
         onClickRefresh: sinon.spy(),
         onCreateMessage: function() {},
         onShowMessageThread: function() {},
@@ -128,6 +132,44 @@ describe('Daily', function () {
       expect(props.onClickRefresh.callCount).to.equal(0);
       TestUtils.Simulate.click(refreshButton);
       expect(props.onClickRefresh.callCount).to.equal(1);
+    });
+
+    it('should have a disabled print button and spinner when a pdf is not ready to print', function () {
+      var props = {
+        bgPrefs,
+        chartPrefs: {},
+        patientData: {},
+        printReady: false,
+        pdf: {},
+      };
+
+      var dailyElem = React.createElement(Daily, props);
+      var elem = TestUtils.renderIntoDocument(dailyElem);
+
+      var printLink = TestUtils.findRenderedDOMComponentWithClass(elem, ['patient-data-subnav-disabled', 'printview-print-icon']);
+      var spinner = TestUtils.findRenderedDOMComponentWithClass(elem, 'print-loading-spinner');
+    });
+
+    it('should have an enabled print button and icon when a pdf is ready and call onSwitchToPrint when clicked', function () {
+      var props = {
+        bgPrefs,
+        chartPrefs: {},
+        patientData: {},
+        printReady: true,
+        pdf: {
+          url: 'blobURL',
+        },
+        onSwitchToPrint: sinon.spy(),
+      };
+
+      var dailyElem = React.createElement(Daily, props);
+      var elem = TestUtils.renderIntoDocument(dailyElem);
+      var printLink = TestUtils.findRenderedDOMComponentWithClass(elem, ['patient-data-subnav-active', 'printview-print-icon']);
+      var printIcon = TestUtils.findRenderedDOMComponentWithClass(elem, 'print-icon');
+
+      expect(props.onSwitchToPrint.callCount).to.equal(0);
+      TestUtils.Simulate.click(printLink);
+      expect(props.onSwitchToPrint.callCount).to.equal(1);
     });
   });
 });

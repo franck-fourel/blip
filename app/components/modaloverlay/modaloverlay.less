@@ -11,14 +11,14 @@
   }
 
   .PatientInfo-button--warning {
-      background-color: @red-light;
-      border-color: @red-light;
+      background-color: @brand-coral;
+      border-color: @brand-coral;
 
       .no-touch &:hover,
       &:focus,
       &:active {
-        background-color: red;
-        border-color: red;
+        background-color: @brand-orange;
+        border-color: @brand-orange;
       }
   }
 }
@@ -43,6 +43,8 @@
   z-index: 11;
   width: 390px;
   padding: 20px 25px;
+  border-radius: 10px;
+  white-space: normal;
 }
 
 .ModalOverlay-content {

@@ -18,7 +18,7 @@ export const ERR_AUTHORIZATION = 'Something went wrong with your account authori
 // 500
 export const ERR_SERVICE_DOWN = 'Sorry! Something went wrong. It\'s our fault, not yours. We\'re going to go investigate. Please try again in a few moments.';
 // 503
-export const ERR_OFFLINE = 'Sorry but it appears that you are offline. Blip requires that you be connected to the internet.';
+export const ERR_OFFLINE = 'Sorry but it appears that you are offline. Tidepool requires that you be connected to the internet.';
 
 // and fallbacks with some info about the step involved when the error happened (useful for debugging)
 export const ERR_ACCEPTING_INVITE = 'Something went wrong while accepting a received care team invitation.';
@@ -49,8 +49,15 @@ export const ERR_FETCHING_PREFERENCES = 'Something went wrong while fetching pat
 export const ERR_UPDATING_PREFERENCES = 'Something went wrong while saving patient preferences.';
 export const ERR_FETCHING_SETTINGS = 'Something went wrong while fetching patient settings.';
 export const ERR_UPDATING_SETTINGS = 'Something went wrong while saving patient settings.';
+export const ERR_UPDATING_PATIENT_BG_UNITS = 'Something went wrong while saving patient BG unit settings.';
 export const ERR_UPDATING_USER = 'Something went wrong while updating user account.';
 export const ERR_YOUR_ACCOUNT_NOT_CONFIGURED = 'Sorry! It appears that your account hasn\'t been fully set up.';
+export const ERR_GENERATING_PDF = 'Something went wrong while generating your report.';
+export const ERR_FETCHING_DATA_DONATION_ACCOUNTS = 'Something went wrong while fetching your data donation preferences.';
+export const ERR_UPDATING_DATA_DONATION_ACCOUNTS = 'Something went wrong while updating your data donation preferences.';
+export const ERR_FETCHING_DATA_SOURCES = 'Something went wrong while fetching your data sources.';
+export const ERR_CONNECTING_DATA_SOURCE = 'Something went wrong while connecting the data source.';
+export const ERR_DISCONNECTING_DATA_SOURCE = 'Something went wrong while disconnecting the data source.';
 
 export const ERR_BIRTHDAY_INVALID = 'Birthday is invalid.';
 export const ERR_BIRTHDAY_MISSING = 'Birthday is required.';
