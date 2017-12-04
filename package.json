@@ -1,6 +1,6 @@
 {
   "name": "blip",
-  "version": "1.7.0",
+  "version": "1.8.3",
   "private": true,
   "scripts": {
     "test": "NODE_ENV=test ./node_modules/karma/bin/karma start",
@@ -8,7 +8,7 @@
     "nightwatch-single": "./node_modules/nightwatch/bin/nightwatch",
     "browser-tests": "NODE_ENV=test ./node_modules/karma/bin/karma start --browsers Chrome",
     "test-watch": "NODE_ENV=test ./node_modules/karma/bin/karma start --no-single-run",
-    "start": "NODE_ENV=development webpack-dev-server --cache --colors --progress --port 3000 --host 0.0.0.0",
+    "start": "NODE_ENV=development ./node_modules/webpack-dev-server/bin/webpack-dev-server.js --cache --colors --progress --port 3000 --host 0.0.0.0",
     "build": "NODE_ENV=production npm run build-app && npm run build-config",
     "build-app": "NODE_ENV=production node buildapp",
     "build-config": "NODE_ENV=production node buildconfig",
@@ -61,6 +61,7 @@
     "react-redux": "4.4.5",
     "react-router": "2.7.0",
     "react-router-redux": "3.0.0",
+    "react-scroll": "1.6.7",
     "react-select": "1.0.0-rc.5",
     "react-window-size-listener": "1.0.8",
     "redux": "3.5.2",
@@ -71,7 +72,7 @@
     "shelljs": "0.7.3",
     "style-loader": "0.13.1",
     "sundial": "1.5.1",
-    "tideline": "0.6.10",
+    "tideline": "0.6.11-basics-print-view.alpha.1",
     "tidepool-platform-client": "0.34.3",
     "uglify-es": "3.0.13",
     "url-loader": "0.5.7",

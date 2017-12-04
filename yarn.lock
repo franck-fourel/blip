@@ -5388,7 +5388,7 @@ optimist@0.6.1, optimist@>=0.3.5, optimist@^0.6.1, optimist@~0.6.0, optimist@~0.
     wordwrap "~0.0.2"
 
 optional@0.1.3:
-  version "0.1.3"
+  version v0.1.3
   resolved "https://registry.yarnpkg.com/optional/-/optional-0.1.3.tgz#f87537517b59a5e732cfd8f18e4f7eea7ab4761e"
 
 optionator@^0.8.1:
@@ -6245,6 +6245,12 @@ react-router@2.7.0:
     invariant "^2.2.1"
     loose-envify "^1.2.0"
     warning "^3.0.0"
+
+react-scroll@1.6.7:
+  version "1.6.7"
+  resolved "https://registry.yarnpkg.com/react-scroll/-/react-scroll-1.6.7.tgz#23b55b1333411e729ea1a609686b1f87978ce77b"
+  dependencies:
+    prop-types "^15.5.8"
 
 react-select@1.0.0-rc.5:
   version "1.0.0-rc.5"
@@ -7541,9 +7547,9 @@ thunkify@~2.1.1:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/thunkify/-/thunkify-2.1.2.tgz#faa0e9d230c51acc95ca13a361ac05ca7e04553d"
 
-tideline@0.6.10:
-  version "0.6.10"
-  resolved "https://registry.yarnpkg.com/tideline/-/tideline-0.6.10.tgz#30f03c2fb525385a582ec2b1b291922e0dfaa5ef"
+tideline@0.6.11-basics-print-view.alpha.1:
+  version "0.6.11-basics-print-view.alpha.1"
+  resolved "https://registry.yarnpkg.com/tideline/-/tideline-0.6.11-basics-print-view.alpha.1.tgz#5513dafac79a4137a0d8bc5ed207fc4f9474db69"
   dependencies:
     bows "1.6.0"
     crossfilter "1.3.12"
