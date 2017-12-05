@@ -18,7 +18,7 @@ import initialState from '../../../../app/redux/reducers/initialState';
 import * as ErrorMessages from '../../../../app/redux/constants/errorMessages';
 import * as UserMessages from '../../../../app/redux/constants/usrMessages';
 
-import { TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL } from '../../../../app/core/constants';
+import { TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL, MMOLL_UNITS } from '../../../../app/core/constants';
 
 // need to require() async in order to rewire utils inside
 const async = require('../../../../app/redux/actions/async');
@@ -1374,6 +1374,114 @@ describe('Actions', () => {
       });
     });
 
+    describe('dismissDonateBanner', () => {
+      it('should trigger DISMISS_BANNER and it should call updatePreferences once for a successful request', () => {
+        let preferences = { dismissedDonateYourDataBannerTime: '2017-11-28T00:00:00.000Z' };
+        let patient = { id: 500, name: 'Buddy Holly', age: 65 };
+
+        let api = {
+          metadata: {
+            preferences: {
+              put: sinon.stub().callsArgWith(2, null, preferences),
+            },
+          },
+          patient: {
+            get: sinon.stub().callsArgWith(1, null, patient)
+          }
+        };
+
+        let expectedActions = [
+          { type: 'DISMISS_BANNER', payload: { type: 'donate' } },
+          { type: 'UPDATE_PREFERENCES_REQUEST' },
+          { type: 'UPDATE_PREFERENCES_SUCCESS', payload: { updatedPreferences: {
+            dismissedDonateYourDataBannerTime: preferences.dismissedDonateYourDataBannerTime,
+          } } },
+        ];
+
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.dismissDonateBanner(api, patient.id));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+      });
+    });
+
+    describe('dismissDexcomConnectBanner', () => {
+      it('should trigger DISMISS_BANNER and it should call updatePreferences once for a successful request', () => {
+        let preferences = { dismissedDexcomConnectBannerTime: '2017-11-28T00:00:00.000Z' };
+        let patient = { id: 500, name: 'Buddy Holly', age: 65 };
+
+        let api = {
+          metadata: {
+            preferences: {
+              put: sinon.stub().callsArgWith(2, null, preferences),
+            },
+          },
+          patient: {
+            get: sinon.stub().callsArgWith(1, null, patient)
+          }
+        };
+
+        let expectedActions = [
+          { type: 'DISMISS_BANNER', payload: { type: 'dexcom' } },
+          { type: 'UPDATE_PREFERENCES_REQUEST' },
+          { type: 'UPDATE_PREFERENCES_SUCCESS', payload: { updatedPreferences: {
+            dismissedDexcomConnectBannerTime: preferences.dismissedDexcomConnectBannerTime,
+          } } },
+        ];
+
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.dismissDexcomConnectBanner(api, patient.id));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+      });
+    });
+
+    describe('clickDexcomConnectBanner', () => {
+      it('should trigger DISMISS_BANNER and it should call updatePreferences once for a successful request', () => {
+        let preferences = { clickedDexcomConnectBannerTime: '2017-11-28T00:00:00.000Z' };
+        let patient = { id: 500, name: 'Buddy Holly', age: 65 };
+
+        let api = {
+          metadata: {
+            preferences: {
+              put: sinon.stub().callsArgWith(2, null, preferences),
+            },
+          },
+          patient: {
+            get: sinon.stub().callsArgWith(1, null, patient)
+          }
+        };
+
+        let expectedActions = [
+          { type: 'DISMISS_BANNER', payload: { type: 'dexcom' } },
+          { type: 'UPDATE_PREFERENCES_REQUEST' },
+          { type: 'UPDATE_PREFERENCES_SUCCESS', payload: { updatedPreferences: {
+            clickedDexcomConnectBannerTime: preferences.clickedDexcomConnectBannerTime,
+          } } },
+        ];
+
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.clickDexcomConnectBanner(api, patient.id));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+      });
+    });
+
     describe('acceptReceivedInvite', () => {
       it('should trigger ACCEPT_RECEIVED_INVITE_SUCCESS and it should call acceptReceivedInvite once for a successful request', () => {
         let invitation = { key: 'foo', creator: { userid: 500 } };
@@ -1695,6 +1803,36 @@ describe('Actions', () => {
         expect(api.metadata.settings.put.calledWith(patientId, settings)).to.be.true;
       });
 
+      it('should trigger UPDATE_PATIENT_BG_UNITS_REQUEST when bg units are being updated', () => {
+          let patientId = 1234;
+          let settings = { units: { bg: MMOLL_UNITS} };
+          let api = {
+            metadata: {
+              settings: {
+                put: sinon.stub().callsArgWith(2, null, settings)
+              }
+            }
+          };
+
+          let expectedActions = [
+            { type: 'UPDATE_SETTINGS_REQUEST' },
+            { type: 'UPDATE_PATIENT_BG_UNITS_REQUEST' },
+            { type: 'UPDATE_SETTINGS_SUCCESS', payload: { userId: patientId, updatedSettings: settings } },
+            { type: 'UPDATE_PATIENT_BG_UNITS_SUCCESS', payload: { userId: patientId, updatedSettings: settings } },
+          ];
+
+          _.each(expectedActions, (action) => {
+            expect(isTSA(action)).to.be.true;
+          });
+
+          let store = mockStore(initialState);
+          store.dispatch(async.updateSettings(api, patientId, settings));
+
+          const actions = store.getActions();
+          expect(actions).to.eql(expectedActions);
+          expect(api.metadata.settings.put.calledWith(patientId, settings)).to.be.true;
+      });
+
       it('should trigger UPDATE_SETTINGS_FAILURE and it should call updateSettings once for a failed request', () => {
         let patientId = 1234;
         let settings = { siteChangeSource: 'cannulaPrime' };
@@ -1713,6 +1851,39 @@ describe('Actions', () => {
           { type: 'UPDATE_SETTINGS_REQUEST' },
           { type: 'UPDATE_SETTINGS_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } }
         ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.updateSettings(api, patientId, settings));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.metadata.settings.put.calledWith(patientId, settings)).to.be.true;
+      });
+
+      it('should trigger UPDATE_PATIENT_BG_UNITS_FAILURE and it should call updateSettings once for a failed request', () => {
+        let patientId = 1234;
+        let settings = { units: { bg: MMOLL_UNITS} };
+        let api = {
+          metadata: {
+            settings: {
+              put: sinon.stub().callsArgWith(2, {status: 500, body: 'Error!'})
+            }
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_UPDATING_SETTINGS);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'UPDATE_SETTINGS_REQUEST' },
+          { type: 'UPDATE_PATIENT_BG_UNITS_REQUEST' },
+          { type: 'UPDATE_SETTINGS_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } },
+          { type: 'UPDATE_PATIENT_BG_UNITS_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } },
+        ];
+
         _.each(expectedActions, (action) => {
           expect(isTSA(action)).to.be.true;
         });
@@ -2826,6 +2997,220 @@ describe('Actions', () => {
         const actions = store.getActions();
         expect(actions).to.eql(expectedActions);
         expect(api.team.getMessageThread.withArgs(400).callCount).to.equal(1);
+      });
+    });
+
+    describe('fetchDataSources', () => {
+      it('should trigger FETCH_DATA_SOURCES_SUCCESS and it should call error once for a successful request', () => {
+        let dataSources = [
+          { id: 'strava' },
+          { id: 'fitbit' },
+        ];
+
+        let api = {
+          user: {
+            getDataSources: sinon.stub().callsArgWith(0, null, dataSources)
+          }
+        };
+
+        let expectedActions = [
+          { type: 'FETCH_DATA_SOURCES_REQUEST' },
+          { type: 'FETCH_DATA_SOURCES_SUCCESS', payload: { dataSources : dataSources } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.fetchDataSources(api));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.getDataSources.callCount).to.equal(1);
+      });
+
+      it('should trigger FETCH_DATA_SOURCES_FAILURE and it should call error once for a failed request', () => {
+        let api = {
+          user: {
+            getDataSources: sinon.stub().callsArgWith(0, {status: 500, body: 'Error!'}, null)
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_FETCHING_DATA_SOURCES);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'FETCH_DATA_SOURCES_REQUEST' },
+          { type: 'FETCH_DATA_SOURCES_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.fetchDataSources(api));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.getDataSources.callCount).to.equal(1);
+      });
+    });
+
+    describe('connectDataSource', () => {
+      it('should trigger CONNECT_DATA_SOURCE_SUCCESS and it should call error once for a successful request', () => {
+        let restrictedToken = { id: 'blah.blah.blah'};
+        let url = 'fitbit.url';
+        let api = {
+          user: {
+            createRestrictedToken: sinon.stub().callsArgWith(1, null, restrictedToken),
+            createOAuthProviderAuthorization: sinon.stub().callsArgWith(2, null, url),
+          }
+        };
+
+        let expectedActions = [
+          { type: 'CONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'CONNECT_DATA_SOURCE_SUCCESS', payload: {
+            authorizedDataSource : { id: 'fitbit', url: url}}
+          }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.connectDataSource(api, 'fitbit', { path: [ '/v1/oauth/fitbit' ] }, { providerType: 'oauth', providerName: 'fitbit' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.createRestrictedToken.withArgs({ path: [ '/v1/oauth/fitbit' ] }).callCount).to.equal(1);
+        expect(api.user.createOAuthProviderAuthorization.withArgs('fitbit', restrictedToken.id).callCount).to.equal(1);
+      });
+
+      it('should trigger CONNECT_DATA_SOURCE_FAILURE and it should call error once for an unexpected provider type', () => {
+        let api = {
+          user: {
+            createRestrictedToken: sinon.stub(),
+            createOAuthProviderAuthorization: sinon.stub(),
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_CONNECTING_DATA_SOURCE);
+
+        let expectedActions = [
+          { type: 'CONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'CONNECT_DATA_SOURCE_FAILURE', error: err, meta: { apiError: 'Unknown data source type' } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.connectDataSource(api, 'strava', { path: [ '/v1/oauth/strava' ] }, { providerType: 'unexpected', providerName: 'strava' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.createRestrictedToken.callCount).to.equal(0);
+        expect(api.user.createOAuthProviderAuthorization.callCount).to.equal(0);
+      });
+
+      it('should trigger CONNECT_DATA_SOURCE_FAILURE and it should call error once for a failed request', () => {
+        let api = {
+          user: {
+            createRestrictedToken: sinon.stub().callsArgWith(1, {status: 500, body: 'Error!'}, null),
+            createOAuthProviderAuthorization: sinon.stub(),
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_CONNECTING_DATA_SOURCE);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'CONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'CONNECT_DATA_SOURCE_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.connectDataSource(api, 'strava', { path: [ '/v1/oauth/strava' ] }, { providerType: 'oauth', providerName: 'strava' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.createRestrictedToken.withArgs({ path: [ '/v1/oauth/strava' ] }).callCount).to.equal(1);
+        expect(api.user.createOAuthProviderAuthorization.callCount).to.equal(0);
+      });
+    });
+
+    describe('disconnectDataSource', () => {
+      it('should trigger DISCONNECT_DATA_SOURCE_SUCCESS and it should call error once for a successful request', () => {
+        let restrictedToken = { id: 'blah.blah.blah'};
+        let api = {
+          user: {
+            deleteOAuthProviderAuthorization: sinon.stub().callsArgWith(1, null, restrictedToken),
+          }
+        };
+
+        let expectedActions = [
+          { type: 'DISCONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'DISCONNECT_DATA_SOURCE_SUCCESS', payload: {}}
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+
+        let store = mockStore(initialState);
+        store.dispatch(async.disconnectDataSource(api, 'fitbit', { providerType: 'oauth', providerName: 'fitbit' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.deleteOAuthProviderAuthorization.withArgs('fitbit').callCount).to.equal(1);
+      });
+
+      it('should trigger DISCONNECT_DATA_SOURCE_FAILURE and it should call error once for an unexpected provider type', () => {
+        let api = {
+          user: {
+            deleteOAuthProviderAuthorization: sinon.stub(),
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_CONNECTING_DATA_SOURCE);
+
+        let expectedActions = [
+          { type: 'DISCONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'DISCONNECT_DATA_SOURCE_FAILURE', error: err, meta: { apiError: 'Unknown data source type' } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.disconnectDataSource(api, 'strava', { providerType: 'unexpected', providerName: 'strava' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.deleteOAuthProviderAuthorization.callCount).to.equal(0);
+      });
+
+      it('should trigger DISCONNECT_DATA_SOURCE_FAILURE and it should call error once for a failed request', () => {
+        let api = {
+          user: {
+            deleteOAuthProviderAuthorization: sinon.stub().callsArgWith(1, {status: 500, body: 'Error!'}, null),
+          }
+        };
+
+        let err = new Error(ErrorMessages.ERR_CONNECTING_DATA_SOURCE);
+        err.status = 500;
+
+        let expectedActions = [
+          { type: 'DISCONNECT_DATA_SOURCE_REQUEST' },
+          { type: 'DISCONNECT_DATA_SOURCE_FAILURE', error: err, meta: { apiError: {status: 500, body: 'Error!'} } }
+        ];
+        _.each(expectedActions, (action) => {
+          expect(isTSA(action)).to.be.true;
+        });
+        let store = mockStore(initialState);
+        store.dispatch(async.disconnectDataSource(api, 'strava', { providerType: 'oauth', providerName: 'strava' }));
+
+        const actions = store.getActions();
+        expect(actions).to.eql(expectedActions);
+        expect(api.user.deleteOAuthProviderAuthorization.withArgs('strava').callCount).to.equal(1);
       });
     });
   });

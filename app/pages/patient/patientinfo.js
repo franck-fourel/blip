@@ -19,9 +19,13 @@ var Link = require('react-router').Link;
 var _ = require('lodash');
 var sundial = require('sundial');
 
+import { Element } from 'react-scroll';
+
 var personUtils = require('../../core/personutils');
 import PatientSettings from './patientsettings';
+import PatientBgUnits from '../../components/patientBgUnits';
 import DonateForm from '../../components/donateform';
+import DataSources from '../../components/datasources';
 
 //date masks we use
 var FORM_DATE_FORMAT = 'MM/DD/YYYY';
@@ -41,7 +45,13 @@ var PatientInfo = React.createClass({
     patient: React.PropTypes.object,
     trackMetric: React.PropTypes.func.isRequired,
     updatingDataDonationAccounts: React.PropTypes.bool,
+    updatingPatientBgUnits: React.PropTypes.bool,
     user: React.PropTypes.object,
+    dataSources: React.PropTypes.array,
+    fetchDataSources: React.PropTypes.func,
+    connectDataSource: React.PropTypes.func,
+    disconnectDataSource: React.PropTypes.func,
+    authorizedDataSource: React.PropTypes.object,
   },
 
   getInitialState: function() {
@@ -132,7 +142,9 @@ var PatientInfo = React.createClass({
           </div>
         </div>
         {this.renderPatientSettings()}
+        {this.renderBgUnitSettings()}
         {this.renderDonateForm()}
+        {this.renderDataSources()}
       </div>
     );
   },
@@ -220,7 +232,9 @@ var PatientInfo = React.createClass({
           {this.renderAboutInput(formValues)}
         </div>
         {this.renderPatientSettings()}
+        {this.renderBgUnitSettings()}
         {this.renderDonateForm()}
+        {this.renderDataSources()}
       </div>
     );
   },
@@ -321,10 +335,27 @@ var PatientInfo = React.createClass({
     return (
       <PatientSettings
         editingAllowed={this.isEditingAllowed(this.props.permsOfLoggedInUser)}
-        patient={this.props.patient}
         onUpdatePatientSettings={this.props.onUpdatePatientSettings}
+        patient={this.props.patient}
         trackMetric={this.props.trackMetric}
       />
+    );
+  },
+
+  renderBgUnitSettings: function() {
+    return (
+      <div className="PatientPage-bgUnitSettings">
+        <div className="PatientPage-sectionTitle">The units I use are</div>
+        <div className="PatientInfo-content">
+          <PatientBgUnits
+            editingAllowed={this.isEditingAllowed(this.props.permsOfLoggedInUser)}
+            onUpdatePatientSettings={this.props.onUpdatePatientSettings}
+            patient={this.props.patient}
+            trackMetric={this.props.trackMetric}
+            working={this.props.updatingPatientBgUnits || false}
+          />
+        </div>
+      </div>
     );
   },
 
@@ -337,11 +368,34 @@ var PatientInfo = React.createClass({
             <DonateForm
               dataDonationAccounts={this.props.dataDonationAccounts || []}
               onUpdateDataDonationAccounts={this.props.onUpdateDataDonationAccounts}
-              working={this.props.updatingDataDonationAccounts}
+              working={this.props.updatingDataDonationAccounts || false}
               trackMetric={this.props.trackMetric}
             />
           </div>
         </div>
+      );
+    }
+
+    return null;
+  },
+
+  renderDataSources: function() {
+    if (this.isSamePersonUserAndPatient()) {
+      return (
+        <Element name="dexcomConnect" className="PatientPage-dataSources">
+          <div className="PatientPage-sectionTitle">My Data Sources</div>
+          <div className="PatientInfo-content">
+            <DataSources
+              dataSources={this.props.dataSources}
+              fetchDataSources={this.props.fetchDataSources}
+              connectDataSource={this.props.connectDataSource}
+              disconnectDataSource={this.props.disconnectDataSource}
+              authorizedDataSource={this.props.authorizedDataSource}
+              trackMetric={this.props.trackMetric}
+              queryParams={this.props.queryParams}
+            />
+          </div>
+        </Element>
       );
     }
 

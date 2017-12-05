@@ -17,6 +17,8 @@
 
 import _ from 'lodash';
 
+import { MGDL_UNITS } from '../../core/constants';
+
 const working = {
   inProgress: false,
   notification: null
@@ -26,6 +28,7 @@ const initialState = {
   passwordResetConfirmed: false,
   showingWelcomeMessage: null,
   showingDonateBanner: null,
+  showingDexcomConnectBanner: null,
   signupKey: null,
   isLoggedIn: false,
   sentEmailVerification: false,
@@ -49,9 +52,12 @@ const initialState = {
     cancellingSentInvite: Object.assign({}, working),
     confirmingPasswordReset: Object.assign({}, working),
     confirmingSignup: Object.assign({}, working),
+    connectingDataSource: Object.assign({}, working),
+    disconnectingDataSource: Object.assign({}, working),
     settingUpDataStorage: Object.assign({}, working),
     rejectingReceivedInvite: Object.assign({}, working),
     fetchingDataDonationAccounts: Object.assign({}, working),
+    fetchingDataSources: Object.assign({}, working),
     fetchingMessageThread: Object.assign({}, working),
     fetchingPatient: Object.assign({}, working),
     fetchingPatientData: Object.assign({}, working),
@@ -70,6 +76,7 @@ const initialState = {
     settingMemberPermissions: Object.assign({}, working),
     updatingDataDonationAccounts: Object.assign({}, working),
     updatingPatient: Object.assign({}, working),
+    updatingPatientBgUnits: Object.assign({}, working),
     updatingUser: Object.assign({}, working),
     verifyingCustodial: Object.assign({}, working),
     signingUp: Object.assign({}, working),
@@ -80,9 +87,11 @@ const initialState = {
     timezoneName: null
   },
   bgPrefs: {
-    bgUnits: 'mg/dL'
+    bgUnits: MGDL_UNITS
   },
   dataDonationAccounts: [],
+  dataSources: [],
+  authorizedDataSource: null,
 };
 
 export default initialState;

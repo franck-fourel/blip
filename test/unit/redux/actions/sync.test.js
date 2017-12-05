@@ -10,7 +10,7 @@ import isTSA from 'tidepool-standard-action';
 import * as sync from '../../../../app/redux/actions/sync';
 import * as UserMessages from '../../../../app/redux/constants/usrMessages';
 
-import { TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL } from '../../../../app/core/constants';
+import { TIDEPOOL_DATA_DONATION_ACCOUNT_EMAIL, MMOLL_UNITS } from '../../../../app/core/constants';
 
 describe('Actions', () => {
 
@@ -41,42 +41,57 @@ describe('Actions', () => {
       });
     });
 
-    describe('showDonateBanner', () => {
+    describe('showBanner', () => {
       it('should be a TSA', () => {
-        let action = sync.showDonateBanner();
+        let action = sync.showBanner();
 
         expect(isTSA(action)).to.be.true;
       });
 
-      it('type should equal SHOW_DONATE_BANNER', () => {
-        let action = sync.showDonateBanner();
-        expect(action.type).to.equal('SHOW_DONATE_BANNER');
+      it('type should equal SHOW_BANNER', () => {
+        let action = sync.showBanner();
+        expect(action.type).to.equal('SHOW_BANNER');
+      });
+
+      it('should set the payload `type` from argument', () => {
+        let action = sync.showBanner('myType');
+        expect(action.payload.type).to.equal('myType');
       });
     });
 
-    describe('hideDonateBanner', () => {
+    describe('hideBanner', () => {
       it('should be a TSA', () => {
-        let action = sync.hideDonateBanner();
+        let action = sync.hideBanner();
 
         expect(isTSA(action)).to.be.true;
       });
 
-      it('type should equal HIDE_DONATE_BANNER', () => {
-        let action = sync.hideDonateBanner();
-        expect(action.type).to.equal('HIDE_DONATE_BANNER');
+      it('type should equal HIDE_BANNER', () => {
+        let action = sync.hideBanner();
+        expect(action.type).to.equal('HIDE_BANNER');
+      });
+
+      it('should set the payload `type` from argument', () => {
+        let action = sync.hideBanner('myType');
+        expect(action.payload.type).to.equal('myType');
       });
     });
 
-    describe('dismissDonateBanner', () => {
+    describe('dismissBanner', () => {
       it('should be a TSA', () => {
-        let action = sync.dismissDonateBanner();
+        let action = sync.dismissBanner();
 
         expect(isTSA(action)).to.be.true;
       });
 
-      it('type should equal DISMISS_DONATE_BANNER', () => {
-        let action = sync.dismissDonateBanner();
-        expect(action.type).to.equal('DISMISS_DONATE_BANNER');
+      it('type should equal DISMISS_BANNER', () => {
+        let action = sync.dismissBanner();
+        expect(action.type).to.equal('DISMISS_BANNER');
+      });
+
+      it('should set the payload `type` from argument', () => {
+        let action = sync.dismissBanner('myType');
+        expect(action.payload.type).to.equal('myType');
       });
     });
 
@@ -1096,6 +1111,53 @@ describe('Actions', () => {
       });
     });
 
+    describe('updatePatientBgUnitsRequest', () => {
+      it('should be a TSA', () => {
+        let action = sync.updatePatientBgUnitsRequest();
+
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal UPDATE_PATIENT_BG_UNITS_REQUEST', () => {
+        let action = sync.updatePatientBgUnitsRequest();
+        expect(action.type).to.equal('UPDATE_PATIENT_BG_UNITS_REQUEST');
+      });
+    });
+
+    describe('updatePatientBgUnitsSuccess', () => {
+      it('should be a TSA', () => {
+        let settings = { units: { bg: MMOLL_UNITS } };
+        let action = sync.updatePatientBgUnitsSuccess(settings);
+
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal UPDATE_PATIENT_BG_UNITS_SUCCESS', () => {
+        let settings = { units: { bg: MMOLL_UNITS } };
+        let action = sync.updatePatientBgUnitsSuccess(1234, settings);
+
+        expect(action.type).to.equal('UPDATE_PATIENT_BG_UNITS_SUCCESS');
+        expect(action.payload.updatedSettings).to.deep.equal(settings);
+      });
+    });
+
+    describe('updatePatientBgUnitsFailure', () => {
+      it('should be a TSA', () => {
+        let error = new Error(':(');
+        let action = sync.updatePatientBgUnitsFailure(error);
+
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal UPDATE_PATIENT_BG_UNITS_FAILURE and error should equal passed error', () => {
+        let error = new Error(':(');
+        let action = sync.updatePatientBgUnitsFailure(error);
+
+        expect(action.type).to.equal('UPDATE_PATIENT_BG_UNITS_FAILURE');
+        expect(action.error).to.equal(error);
+      });
+    });
+
     describe('updateUserRequest', () => {
       it('should be a TSA', () => {
         let action = sync.updateUserRequest();
@@ -1780,6 +1842,144 @@ describe('Actions', () => {
         let action = sync.updateDataDonationAccountsFailure(error);
 
         expect(action.type).to.equal('UPDATE_DATA_DONATION_ACCOUNTS_FAILURE');
+        expect(action.error).to.equal(error);
+      });
+    });
+
+    describe('fetchDataSourcesRequest', () => {
+      it('should be a TSA', () => {
+        let action = sync.fetchDataSourcesRequest();
+
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal FETCH_DATA_SOURCES_REQUEST', () => {
+        let action = sync.fetchDataSourcesRequest();
+        expect(action.type).to.equal('FETCH_DATA_SOURCES_REQUEST');
+      });
+    });
+
+    describe('fetchDataSourcesSuccess', () => {
+      it('should be a TSA', () => {
+        let dataSources = [
+          { id: 'strava', url: 'blah' },
+          { name: 'fitbit', url: 'blah' },
+        ];
+
+        let action = sync.fetchDataSourcesSuccess(dataSources);
+
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal FETCH_DATA_SOURCES_SUCCESS', () => {
+        let dataSources = [
+          { id: 'strava', url: 'blah' },
+          { name: 'fitbit', url: 'blah' },
+        ];
+
+        let action = sync.fetchDataSourcesSuccess(dataSources);
+
+        expect(action.type).to.equal('FETCH_DATA_SOURCES_SUCCESS');
+        expect(action.payload.dataSources).to.equal(dataSources);
+      });
+    });
+
+    describe('fetchDataSourcesFailure', () => {
+      it('should be a TSA', () => {
+        let error = new Error(':(');
+        let action = sync.fetchDataSourcesFailure(error);
+
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal FETCH_DATA_SOURCES_FAILURE and error should equal passed error', () => {
+        let error = new Error('stink :(');
+        let action = sync.fetchDataSourcesFailure(error);
+
+        expect(action.type).to.equal('FETCH_DATA_SOURCES_FAILURE');
+        expect(action.error).to.equal(error);
+      });
+    });
+
+    describe('connectDataSourceRequest', () => {
+      it('should be a TSA', () => {
+        let action = sync.connectDataSourceRequest();
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal CONNECT_DATA_SOURCE_REQUEST', () => {
+        let action = sync.connectDataSourceRequest();
+        expect(action.type).to.equal('CONNECT_DATA_SOURCE_REQUEST');
+      });
+    });
+
+    describe('connectDataSourceSuccess', () => {
+      it('should be a TSA', () => {
+        let action = sync.connectDataSourceSuccess('dataSources', 'stuff');
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal CONNECT_DATA_SOURCE_SUCCESS', () => {
+        let source = { id: 'dataSources', url: 'stuff' };
+        let action = sync.connectDataSourceSuccess(source.id, source.url);
+        expect(action.type).to.equal('CONNECT_DATA_SOURCE_SUCCESS');
+        expect(action.payload.authorizedDataSource.id).to.equal(source.id);
+        expect(action.payload.authorizedDataSource.url).to.equal(source.url);
+      });
+    });
+
+    describe('connectDataSourceFailure', () => {
+      it('should be a TSA', () => {
+        let error = new Error('failed :(');
+        let action = sync.connectDataSourceFailure(error);
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal CONNECT_DATA_SOURCE_FAILURE and error should equal passed error', () => {
+        let error = new Error('opps :(');
+        let action = sync.connectDataSourceFailure(error);
+
+        expect(action.type).to.equal('CONNECT_DATA_SOURCE_FAILURE');
+        expect(action.error).to.equal(error);
+      });
+    });
+
+    describe('disconnectDataSourceRequest', () => {
+      it('should be a TSA', () => {
+        let action = sync.disconnectDataSourceRequest();
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal DISCONNECT_DATA_SOURCE_REQUEST', () => {
+        let action = sync.disconnectDataSourceRequest();
+        expect(action.type).to.equal('DISCONNECT_DATA_SOURCE_REQUEST');
+      });
+    });
+
+    describe('disconnectDataSourceSuccess', () => {
+      it('should be a TSA', () => {
+        let action = sync.disconnectDataSourceSuccess();
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal DISCONNECT_DATA_SOURCE_SUCCESS', () => {
+        let action = sync.disconnectDataSourceSuccess();
+        expect(action.type).to.equal('DISCONNECT_DATA_SOURCE_SUCCESS');
+        expect(action.payload).to.be.empty;
+      });
+    });
+
+    describe('disconnectDataSourceFailure', () => {
+      it('should be a TSA', () => {
+        let error = new Error('disconnecting failed :(');
+        let action = sync.disconnectDataSourceFailure(error);
+        expect(isTSA(action)).to.be.true;
+      });
+
+      it('type should equal DISCONNECT_DATA_SOURCE_FAILURE and error should equal passed error', () => {
+        let error = new Error('stink :(');
+        let action = sync.disconnectDataSourceFailure(error);
+        expect(action.type).to.equal('DISCONNECT_DATA_SOURCE_FAILURE');
         expect(action.error).to.equal(error);
       });
     });

@@ -571,15 +571,22 @@ export function fetchSettings(api, patientId) {
  */
 export function updateSettings(api, patientId, settings) {
   return (dispatch) => {
+    const updatingBgUnits = !!_.get(settings, 'units.bg');
+
     dispatch(sync.updateSettingsRequest());
+    updatingBgUnits && dispatch(sync.updatePatientBgUnitsRequest());
 
     api.metadata.settings.put(patientId, settings, (err, updatedSettings) => {
       if (err) {
         dispatch(sync.updateSettingsFailure(
           createActionError(ErrorMessages.ERR_UPDATING_SETTINGS, err), err
         ));
+        updatingBgUnits && dispatch(sync.updatePatientBgUnitsFailure(
+          createActionError(ErrorMessages.ERR_UPDATING_PATIENT_BG_UNITS, err), err
+        ));
       } else {
         dispatch(sync.updateSettingsSuccess(patientId, updatedSettings));
+        updatingBgUnits && dispatch(sync.updatePatientBgUnitsSuccess(patientId, updatedSettings));
       }
     });
   };
@@ -992,12 +999,142 @@ export function dismissDonateBanner(api, patientId, dismissedDate) {
   dismissedDate = dismissedDate || sundial.utcDateString();
 
   return (dispatch) => {
-    dispatch(sync.dismissDonateBanner());
+    dispatch(sync.dismissBanner('donate'));
 
     const preferences = {
       dismissedDonateYourDataBannerTime: dismissedDate,
     };
 
     dispatch(updatePreferences(api, patientId, preferences));
+  };
+}
+
+/**
+ * Dismiss Dexcom Connect Banner Action Creator
+ *
+ * @param  {Object} api an instance of the API wrapper
+ */
+export function dismissDexcomConnectBanner(api, patientId, dismissedDate) {
+  dismissedDate = dismissedDate || sundial.utcDateString();
+
+  return (dispatch) => {
+    dispatch(sync.dismissBanner('dexcom'));
+
+    const preferences = {
+      dismissedDexcomConnectBannerTime: dismissedDate,
+    };
+
+    dispatch(updatePreferences(api, patientId, preferences));
+  };
+}
+
+/**
+ * Click Donate Banner Action Creator
+ *
+ * @param  {Object} api an instance of the API wrapper
+ */
+export function clickDexcomConnectBanner(api, patientId, clickedDate) {
+  clickedDate = clickedDate || sundial.utcDateString();
+
+  return (dispatch) => {
+    dispatch(sync.dismissBanner('dexcom'));
+
+    const preferences = {
+      clickedDexcomConnectBannerTime: clickedDate,
+    };
+
+    dispatch(updatePreferences(api, patientId, preferences));
+  };
+}
+
+/**
+ * Fetch Data Sources
+ *
+ * @param  {Object} api an instance of the API wrapper
+ */
+export function fetchDataSources(api) {
+  return (dispatch) => {
+    dispatch(sync.fetchDataSourcesRequest());
+
+    api.user.getDataSources((err, dataSources) => {
+      if (err) {
+        dispatch(sync.fetchDataSourcesFailure(
+          createActionError(ErrorMessages.ERR_FETCHING_DATA_SOURCES, err), err
+        ));
+      } else {
+        dispatch(sync.fetchDataSourcesSuccess(dataSources));
+      }
+    });
+  };
+}
+
+/**
+ * Connect Data Source
+ *
+ * @param  {Object} api an instance of the API wrapper
+ * @param  {String} id the internal provider id
+ * @param  {Object} restrictedTokenCreate the restricted token creation object
+ * @param  {Object} dataSourceFilter the filter for the data source
+ */
+export function connectDataSource(api, id, restrictedTokenCreate, dataSourceFilter) {
+  return (dispatch) => {
+    dispatch(sync.connectDataSourceRequest());
+
+    if (dataSourceFilter.providerType !== 'oauth') {
+      let err = 'Unknown data source type';
+      dispatch(sync.connectDataSourceFailure(
+        createActionError(ErrorMessages.ERR_CONNECTING_DATA_SOURCE, err), err
+      ));
+    } else {
+      api.user.createRestrictedToken(restrictedTokenCreate, (err, restrictedToken) => {
+        if (err) {
+          dispatch(sync.connectDataSourceFailure(
+            createActionError(ErrorMessages.ERR_CONNECTING_DATA_SOURCE, err), err
+          ));
+        } else {
+          restrictedToken = _.get(restrictedToken, 'id');
+          api.user.createOAuthProviderAuthorization(dataSourceFilter.providerName, restrictedToken, (err, url) => {
+            if (err) {
+              dispatch(sync.connectDataSourceFailure(
+                createActionError(ErrorMessages.ERR_CONNECTING_DATA_SOURCE, err), err
+              ));
+              return
+            } else {
+              dispatch(sync.connectDataSourceSuccess(id, url));
+            }
+          });
+        }
+      });
+    }
+  };
+}
+
+/**
+ * Disconnect Data Source
+ *
+ * @param  {Object} api an instance of the API wrapper
+ * @param  {String} id the internal provider id
+ * @param  {Object} dataSourceFilter the filter for the data source
+ */
+export function disconnectDataSource(api, id, dataSourceFilter) {
+  return (dispatch) => {
+    dispatch(sync.disconnectDataSourceRequest());
+
+    if (dataSourceFilter.providerType !== 'oauth') {
+      let err = 'Unknown data source type';
+      dispatch(sync.disconnectDataSourceFailure(
+        createActionError(ErrorMessages.ERR_DISCONNECTING_DATA_SOURCE, err), err
+      ));
+    } else {
+      api.user.deleteOAuthProviderAuthorization(dataSourceFilter.providerName, (err, restrictedToken) => {
+        if (err) {
+          dispatch(sync.disconnectDataSourceFailure(
+            createActionError(ErrorMessages.ERR_DISCONNECTING_DATA_SOURCE, err), err
+          ));
+        } else {
+          dispatch(sync.disconnectDataSourceSuccess());
+        }
+      });
+    }
   };
 }

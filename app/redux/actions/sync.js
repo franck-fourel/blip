@@ -32,21 +32,24 @@ export function hideWelcomeMessage() {
   };
 }
 
-export function showDonateBanner() {
+export function showBanner(type) {
   return {
-    type: ActionTypes.SHOW_DONATE_BANNER,
+    type: ActionTypes.SHOW_BANNER,
+    payload: { type },
   };
 }
 
-export function hideDonateBanner() {
+export function hideBanner(type) {
   return {
-    type: ActionTypes.HIDE_DONATE_BANNER,
+    type: ActionTypes.HIDE_BANNER,
+    payload: { type },
   };
 }
 
-export function dismissDonateBanner() {
+export function dismissBanner(type) {
   return {
-    type: ActionTypes.DISMISS_DONATE_BANNER,
+    type: ActionTypes.DISMISS_BANNER,
+    payload: { type },
   };
 }
 
@@ -625,6 +628,32 @@ export function updateSettingsFailure(error, apiError) {
   };
 }
 
+export function updatePatientBgUnitsRequest() {
+  return {
+    type: ActionTypes.UPDATE_PATIENT_BG_UNITS_REQUEST,
+  };
+}
+
+export function updatePatientBgUnitsSuccess(userId, settings) {
+  return {
+    type: ActionTypes.UPDATE_PATIENT_BG_UNITS_SUCCESS,
+    payload: {
+      userId: userId,
+      updatedSettings: _.pick(settings, ['bgTarget', 'units']),
+    },
+  };
+}
+
+export function updatePatientBgUnitsFailure(error, apiError) {
+  return {
+    type: ActionTypes.UPDATE_PATIENT_BG_UNITS_FAILURE,
+    error: error,
+    meta: {
+      apiError: apiError || null,
+    },
+  };
+}
+
 export function updateUserRequest(userId, user) {
   return {
     type: ActionTypes.UPDATE_USER_REQUEST,
@@ -892,6 +921,82 @@ export function updateDataDonationAccountsSuccess(accounts) {
 export function updateDataDonationAccountsFailure(error, apiError) {
   return {
     type: ActionTypes.UPDATE_DATA_DONATION_ACCOUNTS_FAILURE,
+    error: error,
+    meta: {
+      apiError: apiError || null,
+    },
+  };
+}
+
+export function fetchDataSourcesRequest() {
+  return {
+    type: ActionTypes.FETCH_DATA_SOURCES_REQUEST,
+  };
+}
+
+export function fetchDataSourcesSuccess(dataSources) {
+  return {
+    type: ActionTypes.FETCH_DATA_SOURCES_SUCCESS,
+    payload: {
+      dataSources,
+    },
+  };
+}
+
+export function fetchDataSourcesFailure(error, apiError) {
+  return {
+    type: ActionTypes.FETCH_DATA_SOURCES_FAILURE,
+    error: error,
+    meta: {
+      apiError: apiError || null,
+    },
+  };
+}
+
+export function connectDataSourceRequest() {
+  return {
+    type: ActionTypes.CONNECT_DATA_SOURCE_REQUEST,
+  };
+}
+
+export function connectDataSourceSuccess(id, url) {
+  return {
+    type: ActionTypes.CONNECT_DATA_SOURCE_SUCCESS,
+    payload: {
+      authorizedDataSource: {
+        id,
+        url,
+      }
+    },
+  };
+}
+
+export function connectDataSourceFailure(error, apiError) {
+  return {
+    type: ActionTypes.CONNECT_DATA_SOURCE_FAILURE,
+    error: error,
+    meta: {
+      apiError: apiError || null,
+    },
+  };
+}
+
+export function disconnectDataSourceRequest() {
+  return {
+    type: ActionTypes.DISCONNECT_DATA_SOURCE_REQUEST,
+  };
+}
+
+export function disconnectDataSourceSuccess() {
+  return {
+    type: ActionTypes.DISCONNECT_DATA_SOURCE_SUCCESS,
+    payload: {},
+  };
+}
+
+export function disconnectDataSourceFailure(error, apiError) {
+  return {
+    type: ActionTypes.DISCONNECT_DATA_SOURCE_FAILURE,
     error: error,
     meta: {
       apiError: apiError || null,

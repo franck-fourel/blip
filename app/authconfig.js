@@ -1,6 +1,6 @@
 export const AUTH_CONFIG = {
-  domain: 'tidepool-dev.auth0.com',
-  clientId: 'uoaUqRCwDo4oEVF2gXwbaGMQ74GQYQLz',
+  domain: 'tidepool-stg.auth0.com',
+  clientId: 'o8sOKy8SE4ruwC8zc1MCSTjOQ8MjeLhw',
   responseType: 'id_token token',
   scope: 'openid profile read:device-data',
   audience: 'open-api',

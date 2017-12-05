@@ -122,6 +122,11 @@ export default (type) => {
     case types.UPDATE_PATIENT_FAILURE:
       return 'updatingPatient';
 
+    case types.UPDATE_PATIENT_BG_UNITS_REQUEST:
+    case types.UPDATE_PATIENT_BG_UNITS_SUCCESS:
+    case types.UPDATE_PATIENT_BG_UNITS_FAILURE:
+      return 'updatingPatientBgUnits';
+
     case types.UPDATE_USER_REQUEST:
     case types.UPDATE_USER_SUCCESS:
     case types.UPDATE_USER_FAILURE:
@@ -146,6 +151,21 @@ export default (type) => {
     case types.UPDATE_DATA_DONATION_ACCOUNTS_SUCCESS:
     case types.UPDATE_DATA_DONATION_ACCOUNTS_FAILURE:
       return 'updatingDataDonationAccounts';
+
+    case types.FETCH_DATA_SOURCES_REQUEST:
+    case types.FETCH_DATA_SOURCES_SUCCESS:
+    case types.FETCH_DATA_SOURCES_FAILURE:
+      return 'fetchingDataSources';
+
+    case types.CONNECT_DATA_SOURCE_REQUEST:
+    case types.CONNECT_DATA_SOURCE_SUCCESS:
+    case types.CONNECT_DATA_SOURCE_FAILURE:
+      return 'connectingDataSource';
+
+    case types.DISCONNECT_DATA_SOURCE_REQUEST:
+    case types.DISCONNECT_DATA_SOURCE_SUCCESS:
+    case types.DISCONNECT_DATA_SOURCE_FAILURE:
+      return 'disconnectingDataSource';
 
     default:
       return null;

@@ -1403,6 +1403,62 @@ describe('working', () => {
       });
     });
 
+    describe('updatePatientBgUnits', () => {
+      describe('request', () => {
+        it('should set updatingPatientBgUnits to be true', () => {
+          let action = actions.sync.updatePatientBgUnitsRequest();
+
+          expect(initialState.updatingPatientBgUnits.inProgress).to.be.false;
+
+          let state = reducer(initialState, action);
+          expect(state.updatingPatientBgUnits.inProgress).to.be.true;
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+
+      describe('failure', () => {
+        it('should set updatingPatientBgUnits to be false and set error', () => {
+          let initialStateForTest = _.merge({}, initialState, { updatingPatientBgUnits: { inProgress : true, notification: null } });
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+          let error = new Error('Something bad happened :(');
+          let action = actions.sync.updatePatientBgUnitsFailure(error);
+
+          expect(initialStateForTest.updatingPatientBgUnits.inProgress).to.be.true;
+          expect(initialStateForTest.updatingPatientBgUnits.notification).to.be.null;
+
+          let state = reducer(initialStateForTest, action);
+
+          expect(state.updatingPatientBgUnits.inProgress).to.be.false;
+          expect(state.updatingPatientBgUnits.notification.type).to.equal('error');
+          expect(state.updatingPatientBgUnits.notification.message).to.equal(error.message);
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+
+      describe('success', () => {
+        it('should set updatingPatientBgUnits to be false', () => {
+          let currentPatient = { userid: 506, name: 'Alice' };
+          let updatedPatient = { userid: 506, name: 'Alice Cooper' };
+
+          let initialStateForTest = _.merge(
+            {},
+            initialState,
+            { updatingPatientBgUnits: { inProgress : true, notification: null }
+          });
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+
+          let action = actions.sync.updatePatientBgUnitsSuccess(updatedPatient);
+
+          expect(initialStateForTest.updatingPatientBgUnits.inProgress).to.be.true;
+
+          let state = reducer(initialStateForTest, action);
+
+          expect(state.updatingPatientBgUnits.inProgress).to.be.false;
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+    });
+
     describe('updateUser', () => {
       describe('request', () => {
         it('should set updatingUser to be true', () => {
@@ -1589,6 +1645,183 @@ describe('working', () => {
           let state = reducer(initialStateForTest, action);
 
           expect(state.updatingDataDonationAccounts.inProgress).to.be.false;
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+    });
+
+    describe('fetchDataSources', () => {
+      describe('request', () => {
+        it('should set fetchingDataSources to be true', () => {
+          let initialStateForTest = _.merge({}, initialState);
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+          let action = actions.sync.fetchDataSourcesRequest();
+
+          expect(initialStateForTest.fetchingDataSources.inProgress).to.be.false;
+
+          let state = reducer(initialStateForTest, action);
+          expect(state.fetchingDataSources.inProgress).to.be.true;
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+
+      describe('failure', () => {
+        it('should set fetchingDataSources to be false and set error', () => {
+          let initialStateForTest = _.merge({}, initialState, {
+            fetchingDataSources: { inProgress: true, notification: null },
+          });
+
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+          let error = new Error('Something bad happened :(');
+          let action = actions.sync.fetchDataSourcesFailure(error);
+
+          expect(initialStateForTest.fetchingDataSources.inProgress).to.be.true;
+          expect(initialStateForTest.fetchingDataSources.notification).to.be.null;
+
+          let state = reducer(initialStateForTest, action);
+
+          expect(state.fetchingDataSources.inProgress).to.be.false;
+          expect(state.fetchingDataSources.notification.type).to.equal('error');
+          expect(state.fetchingDataSources.notification.message).to.equal(error.message);
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+
+      describe('success', () => {
+        it('should set fetchingDataSources to be false', () => {
+          let dataSources = [
+            { id: 'strava', url: 'blah' },
+            { name: 'fitbit', url: 'blah' },
+          ];
+
+          let initialStateForTest = _.merge({}, initialState, {
+            fetchingDataSources: { inProgress: true, notification: null },
+          });
+
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+
+          let action = actions.sync.fetchDataSourcesSuccess(dataSources);
+
+          expect(initialStateForTest.fetchingDataSources.inProgress).to.be.true;
+
+          let state = reducer(initialStateForTest, action);
+
+          expect(state.fetchingDataSources.inProgress).to.be.false;
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+    });
+
+    describe('connectDataSource', () => {
+      describe('request', () => {
+        it('should set connectDataSource to be true', () => {
+          let initialStateForTest = _.merge({}, initialState);
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+          let action = actions.sync.connectDataSourceRequest();
+
+          expect(initialStateForTest.connectingDataSource.inProgress).to.be.false;
+
+          let state = reducer(initialStateForTest, action);
+          expect(state.connectingDataSource.inProgress).to.be.true;
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+
+      describe('failure', () => {
+        it('should set connectDataSource to be false and set error', () => {
+          let initialStateForTest = _.merge({}, initialState, {
+            connectingDataSource: { inProgress: true, notification: null },
+          });
+
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+          let error = new Error('Something bad happened :(');
+          let action = actions.sync.connectDataSourceFailure(error);
+
+          expect(initialStateForTest.connectingDataSource.inProgress).to.be.true;
+          expect(initialStateForTest.connectingDataSource.notification).to.be.null;
+
+          let state = reducer(initialStateForTest, action);
+
+          expect(state.connectingDataSource.inProgress).to.be.false;
+          expect(state.connectingDataSource.notification.type).to.equal('error');
+          expect(state.connectingDataSource.notification.message).to.equal(error.message);
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+
+      describe('success', () => {
+        it('should set connectingDataSource to be false', () => {
+
+          let initialStateForTest = _.merge({}, initialState, {
+            connectingDataSource: { inProgress: true, notification: null },
+          });
+
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+
+          let action = actions.sync.connectDataSourceSuccess('strava', 'blah');
+
+          expect(initialStateForTest.connectingDataSource.inProgress).to.be.true;
+
+          let state = reducer(initialStateForTest, action);
+
+          expect(state.connectingDataSource.inProgress).to.be.false;
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+    });
+
+    describe('disconnectDataSource', () => {
+      describe('request', () => {
+        it('should set disconnectingDataSource to be true', () => {
+          let initialStateForTest = _.merge({}, initialState);
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+          let action = actions.sync.disconnectDataSourceRequest();
+
+          expect(initialStateForTest.disconnectingDataSource.inProgress).to.be.false;
+
+          let state = reducer(initialStateForTest, action);
+          expect(state.disconnectingDataSource.inProgress).to.be.true;
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+
+      describe('failure', () => {
+        it('should set disconnectingDataSource to be false and set error', () => {
+          let initialStateForTest = _.merge({}, initialState, {
+            disconnectingDataSource: { inProgress: true, notification: null },
+          });
+
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+          let error = new Error('Something bad happened when disconnecting :(');
+          let action = actions.sync.disconnectDataSourceFailure(error);
+
+          expect(initialStateForTest.disconnectingDataSource.inProgress).to.be.true;
+          expect(initialStateForTest.disconnectingDataSource.notification).to.be.null;
+
+          let state = reducer(initialStateForTest, action);
+
+          expect(state.disconnectingDataSource.inProgress).to.be.false;
+          expect(state.disconnectingDataSource.notification.type).to.equal('error');
+          expect(state.disconnectingDataSource.notification.message).to.equal(error.message);
+          expect(mutationTracker.hasMutated(tracked)).to.be.false;
+        });
+      });
+
+      describe('success', () => {
+        it('should set updatingUser to be false', () => {
+          let initialStateForTest = _.merge({}, initialState, {
+            disconnectingDataSource: { inProgress: true, notification: null },
+          });
+
+          let tracked = mutationTracker.trackObj(initialStateForTest);
+
+          let action = actions.sync.disconnectDataSourceSuccess();
+
+          expect(initialStateForTest.disconnectingDataSource.inProgress).to.be.true;
+
+          let state = reducer(initialStateForTest, action);
+
+          expect(state.disconnectingDataSource.inProgress).to.be.false;
           expect(mutationTracker.hasMutated(tracked)).to.be.false;
         });
       });

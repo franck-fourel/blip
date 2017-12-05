@@ -40,9 +40,12 @@ import {
   sentEmailVerification,
   showingWelcomeMessage,
   showingDonateBanner,
+  showingDexcomConnectBanner,
   timePrefs,
   signupKey,
   dataDonationAccounts,
+  dataSources,
+  authorizedDataSource,
 } from './misc';
 
 export default combineReducers({
@@ -67,8 +70,11 @@ export default combineReducers({
   sentEmailVerification,
   showingWelcomeMessage,
   showingDonateBanner,
+  showingDexcomConnectBanner,
   timePrefs,
   signupKey,
   dataDonationAccounts,
+  dataSources,
+  authorizedDataSource,
   working,
 });

@@ -3,6 +3,7 @@
 /* global sinon */
 /* global it */
 /* global beforeEach */
+/* global afterEach */
 
 var React = require('react');
 var TestUtils = require('react-addons-test-utils');
@@ -13,22 +14,48 @@ import { mount } from 'enzyme';
 
 describe('PatientInfo', function () {
 
+  let props = {
+    user: { userid: 5678 },
+    patient: { userid: 1234 },
+    fetchingPatient: false,
+    fetchingUser: false,
+    onUpdatePatient: sinon.stub(),
+    trackMetric: sinon.stub(),
+    dataSources: [],
+    fetchDataSources: sinon.stub(),
+    connectDataSource: sinon.stub(),
+    disconnectDataSource: sinon.stub(),
+  };
+
+  let wrapper;
+  beforeEach(() => {
+    wrapper = mount(
+      <PatientInfo
+        {...props}
+      />
+    );
+  });
+
+  afterEach(() => {
+    props.onUpdatePatient.reset();
+    props.trackMetric.reset();
+    props.fetchDataSources.reset();
+    props.connectDataSource.reset();
+    props.disconnectDataSource.reset();
+  });
+
   describe('render', function() {
     it('should render without problems when required props are present', () => {
       console.error = sinon.spy();
       var props = {
         fetchingPatient: false,
         fetchingUser: false,
+        patient: {},
         onUpdatePatient: sinon.stub(),
         onUpdatePatientSettings: sinon.stub(),
         permsOfLoggedInUser: {},
-        trackMetric: sinon.stub()
+        trackMetric: sinon.stub(),
       };
-
-      var patientInfoElem = React.createElement(PatientInfo, props);
-      var elem = TestUtils.renderIntoDocument(patientInfoElem);
-      expect(elem).to.be.ok;
-      expect(console.error.callCount).to.equal(0);
     });
   });
 
@@ -651,7 +678,7 @@ describe('PatientInfo', function () {
       wrapper = mount(<PatientInfo {...props} />);
     });
 
-    it('should render the donation form, but only if the patient is the logged in user', function() {
+    it('should render the donation form, but only if the patient is the logged-in user', function() {
       expect(wrapper.find('.PatientPage-donateForm')).to.have.length(0);
 
       wrapper.setProps({
@@ -659,6 +686,50 @@ describe('PatientInfo', function () {
       });
 
       expect(wrapper.find('.PatientPage-donateForm')).to.have.length(1);
+    });
+  });
+
+  describe('renderBgUnitSettings', function() {
+    let props = {
+      user: { userid: 5678 },
+      patient: { userid: 1234 },
+      permsOfLoggedInUser: {},
+    };
+
+    let wrapper;
+
+    beforeEach(() => {
+      wrapper = mount(<PatientInfo {...props} />);
+    });
+
+    it('should render the bg unit settings value if editing is not allowed', function() {
+      const bgUnitSettings = wrapper.find('.PatientPage-bgUnitSettings');
+
+      expect(bgUnitSettings).to.have.length(1);
+      expect(bgUnitSettings.find('.bgUnits').text()).to.equal('mg/dL');
+      expect(bgUnitSettings.find('.simple-form').length).to.equal(0);
+    });
+
+    it('should render the bg unit settings form if editing is allowed', function() {
+      wrapper.setProps({
+        permsOfLoggedInUser: { root: true },
+      });
+
+      const bgUnitSettings = wrapper.find('.PatientPage-bgUnitSettings');
+      expect(bgUnitSettings).to.have.length(1);
+      expect(bgUnitSettings.find('.simple-form').length).to.equal(1);
+    });
+  });
+
+  describe('renderDataSources', function() {
+    it('should not render the data sources if the patient is NOT the logged in user', function() {
+      expect(wrapper.instance().isSamePersonUserAndPatient()).to.equal(false);
+      expect(wrapper.find('.PatientPage-dataSources')).to.have.length(0);
+    });
+    it('should render the data sources if the patient is the logged in user', function() {
+      wrapper.setProps({ patient: { userid: 5678 }});
+      expect(wrapper.instance().isSamePersonUserAndPatient()).to.equal(true);
+      expect(wrapper.find('.PatientPage-dataSources')).to.have.length(1);
     });
   });
 });
