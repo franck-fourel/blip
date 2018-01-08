@@ -7564,9 +7564,9 @@ tideline@0.6.11-basics-print-view.alpha.1:
     moment-timezone "0.5.5"
     sundial "1.5.0"
 
-tidepool-platform-client@0.4.0-alpha.5:
-  version "0.4.0-alpha.5"
-  resolved "https://registry.yarnpkg.com/tidepool-platform-client/-/tidepool-platform-client-0.4.0-alpha.5.tgz#7fb4cf88c74b4ee775658bb7701e5ac65f6e17e5"
+tidepool-platform-client@v0.4.0-accept-access-tokens.0:
+  version "0.4.0-accept-access-tokens.0"
+  resolved "https://registry.yarnpkg.com/tidepool-platform-client/-/tidepool-platform-client-0.4.0-accept-access-tokens.0.tgz#72e24ae70b3eef0b0dccf78069b569aaed3caf0f"
   dependencies:
     async "0.9.0"
     lodash "3.3.1"
