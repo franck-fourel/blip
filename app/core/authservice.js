@@ -12,16 +12,19 @@ export default class AuthService {
   }
 
   getParameterByName(name) {
-    var match = RegExp('[#&]' + name + '=([^&]*)').exec(window.location.hash);
+    const match = RegExp('[#&]' + name + '=([^&]*)').exec(window.location.hash);
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   }
 
   extractAccessToken(api) {
+    console.log('AUTH API: ', api);
     const accessToken = this.getParameterByName('access_token');
-    const tokenData = jwtDecode(accessToken);
-    if (accessToken && tokenData.sub) {
-      const userID = tokenData.sub.split('auth0|')[1];
-      api.user.saveAccessTokenSession(userID, accessToken, {});
-    }
+    if (accessToken) {
+      const tokenData = jwtDecode(accessToken);
+      if (tokenData.sub) {
+        const userID = tokenData.sub.split('auth0|')[1];
+        api.user.saveAccessTokenSession(userID, accessToken, {});
+      }
+    }    
   }
 }

@@ -56,7 +56,7 @@ export let HostedLogin = React.createClass({
     const inviteIntro = this.renderInviteIntroduction();
     const nonce = Math.random().toString(36).substring(7);
     const authURL = `https://${AUTH_CONFIG.domain}/authorize?scope=${AUTH_CONFIG.scope}&audience=${AUTH_CONFIG.audience}&response_type=${AUTH_CONFIG.responseType}&client_id=${AUTH_CONFIG.clientId}&redirect_uri=${AUTH_CONFIG.loginRedirectUri}&nonce=${nonce}&initialScreen=login&signupEmail=${this.props.seedEmail}`; 
-   
+    
     return (
       <div className="login">
         <LoginNav
