@@ -12,7 +12,7 @@ install:
 - yarn install --frozen-lockfile
 addons:
   artifacts:
-    s3_region: eu-west-3
+    s3_region: eu-west-1
     paths:
     - $(git ls-files -o deploy/*/*-*.tar.gz | tr "\n" ":")
     target_paths:
