@@ -1,37 +1,38 @@
 sudo: false
-
 language: node_js
-
 node_js:
-  - 6.10.2
-  - node
-
+- 6.10.2
+- node
 cache: yarn
-
 before_install:
-  - if [[ `npm -v` != 4* ]]; then npm install -g npm@4; fi
-  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.27.5
-  - export PATH="$HOME/.yarn/bin:$PATH"
-
+- if [[ `npm -v` != 4* ]]; then npm install -g npm@4; fi
+- curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.27.5
+- export PATH="$HOME/.yarn/bin:$PATH"
 install:
-  - yarn install --frozen-lockfile
-
+- yarn install --frozen-lockfile
 addons:
   artifacts:
-    s3_region: us-west-2
+    s3_region: eu-west-3
     paths:
-      - $(git ls-files -o deploy/*/*-*.tar.gz | tr "\n" ":")
+    - $(git ls-files -o deploy/*/*-*.tar.gz | tr "\n" ":")
     target_paths:
-      - /
-
+    - "/"
 services:
-  - docker
-
+- docker
 script:
-  - npm run lint
-  - npm test
-  - ./artifact.sh
-
+- npm run lint
+- npm test
+- "./artifact.sh"
 matrix:
   allow_failures:
-    - node_js: node
+  - node_js: node
+deploy:
+  provider: s3
+  access_key_id: AKIAIVIQ7MXDFDZ3BQWQ
+  secret_access_key:
+    secure: W2fm3SEcoa0hZ2o6i9xROAiGOHOqUdv8ivD2weWhAPGG5xXQ4vEWRxKBelyBjp90V3SyCcui1Cf85gpOjmrtm4uUGN8LFIrMeYoJceTlrw6YN6xjrcM1whujPozJoEsql/WEZeFs7wYBBgl6SDUzBB3Omn8/oB6jLCnBaziPQ2hJTYU2VlUTxZLDajDWVGGcTe2RxocUx3QOdBOTw6CXIx2WCbVfemppcHNtQQZJGqtzFPFQCcpI3Kd6QX+bhqPov1e9KqGbAxeDVtIq4ftESSEdJ7uZSdn+MKH+I1TF34FEzZlD5/xF4FCRU2g3jlaMVe3hzxlT/WhT7LLgWZltY9DhSBcHz29ZJ7b82GRrEODMspcU6yZW7XlsrduHXA90PwS0/rP5HjXgsY5UQJMWBJ5iGem8gYbAsb9FPuw/V42alJgFDrj2owHKLztOzXn0lNyx4Zf9LlHliS8dIbfnrrFYAj7oPQVPQmS/YCI1AaYDmBL7en0ppVYyW5jteOnWfRvuU7G9LGraofFYzkjEol5JeCDjot26rIiuYb+ozirvWLCoAQ2pOVtWkPWS8u16gWiYiC+GCPnh74zRM2IZ2Ev+ewhaa5tcD6CnGBZ+5ASZF22vrnwcKQg/Xd2nyZAtrHJ8ITixwegw5nRBxpJs0usDgRYYscDRkKL/T+LQgd4=
+  bucket: blip
+  acl: private
+  on:
+    repo: mdblp/blip
+    branch: dbl
