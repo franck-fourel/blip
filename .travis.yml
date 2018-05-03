@@ -1,28 +1,37 @@
 sudo: false
+
 language: node_js
+
 node_js:
-- 6.10.2
-- node
+  - 6.10.2
+  - node
+
 cache: yarn
+
 before_install:
-- if [[ `npm -v` != 4* ]]; then npm install -g npm@4; fi
-- curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.27.5
-- export PATH="$HOME/.yarn/bin:$PATH"
+  - if [[ `npm -v` != 4* ]]; then npm install -g npm@4; fi
+  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 0.27.5
+  - export PATH="$HOME/.yarn/bin:$PATH"
+
 install:
-- yarn install --frozen-lockfile
+  - yarn install --frozen-lockfile
+
 addons:
   artifacts:
-    s3_region: eu-west-1
+    s3_region: us-west-2
     paths:
-    - $(git ls-files -o deploy/*/*-*.tar.gz | tr "\n" ":")
+      - $(git ls-files -o deploy/*/*-*.tar.gz | tr "\n" ":")
     target_paths:
-    - "/"
+      - /
+
 services:
-- docker
+  - docker
+
 script:
-- npm run lint
-- npm test
-- "./artifact.sh"
+  - npm run lint
+  - npm test
+  - ./artifact.sh
+
 matrix:
   allow_failures:
-  - node_js: node
+    - node_js: node
