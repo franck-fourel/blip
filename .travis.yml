@@ -31,6 +31,7 @@ script:
   - npm run lint
   - npm test
   - ./artifact.sh
+  - ./artifact_node.sh
 
 matrix:
   allow_failures:
