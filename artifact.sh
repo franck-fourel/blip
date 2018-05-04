@@ -4,4 +4,6 @@
 chmod +x artifact_node.sh
 
 . ./version.sh
+echo "ARTIFACT_NODE_VERSION=${ARTIFACT_NODE_VERSION}"
+echo "TRAVIS_NODE_VERSION=${TRAVIS_NODE_VERSION}"
 ./artifact_node.sh
