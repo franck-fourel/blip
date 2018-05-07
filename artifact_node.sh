@@ -6,6 +6,7 @@ if [ "${TRAVIS_NODE_VERSION}" != "${ARTIFACT_NODE_VERSION}" ]; then
     exit 0
 fi
 
+echo "TRAVIS_TAG: ${TRAVIS_TAG:-}"
 if [ -n "${TRAVIS_TAG:-}" ]; then
     ARTIFACT_DIR='deploy'
 
